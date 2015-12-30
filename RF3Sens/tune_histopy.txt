@@ -1,0 +1,22 @@
+Sketch uses 1 268 bytes (4%) of program storage space. Maximum is 30 720 bytes.
+Global variables use 236 bytes (11%) of dynamic memory, leaving 1 812 bytes for local variables. Maximum is 2 048 bytes.
+
+программный spi
+Sketch uses 912 bytes (2%) of program storage space. Maximum is 30 720 bytes.
+Global variables use 235 bytes (11%) of dynamic memory, leaving 1 813 bytes for local variables. Maximum is 2 048 bytes.
+
+SoftSerial
+Sketch uses 3 012 bytes (50%) of program storage space. Maximum is 6 012 bytes.
+Global variables use 129 bytes of dynamic memory.
+замена SoftSerial на SendOnlySoftwareSerial
+Sketch uses 1 878 bytes (31%) of program storage space. Maximum is 6 012 bytes.
+Global variables use 42 bytes of dynamic memory.
+
+Sketch uses 4 468 bytes (14%) of program storage space. Maximum is 30 720 bytes.
+Global variables use 254 bytes (12%) of dynamic memory, leaving 1 794 bytes for local variables. Maximum is 2 048 bytes.
+без Serial.println(String(Frame...
+Sketch uses 2 866 bytes (9%) of program storage space. Maximum is 30 720 bytes.
+Global variables use 247 bytes (12%) of dynamic memory, leaving 1 801 bytes for local variables. Maximum is 2 048 bytes.
+
+Выпилил ненужный:
+Frame[(ARRAY_WIDTH * ARRAY_HEIGHT)+1] = 0xff;  // frame data is 0..63 or 0..127 so delimiter 255 is safe
