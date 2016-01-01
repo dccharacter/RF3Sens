@@ -31,7 +31,8 @@ debug_type = 5  Данные перемещения мышки.
 Для платы Digispark это единственный вариант и автоматически включается на 1 ногу
 Если не определено, для дебага используется Hardware Serial
 */
-#define software_serial 1 // одновременно и признак софтового serial и номер ноги для передачи данных (TX PIN)
+//#define software_serial 1 // одновременно и признак софтового serial и номер ноги для передачи данных (TX PIN)
+#define SERIAL_SPEED 115200
 
 /*
 Тип сенсора, выбрать один нужный
@@ -43,9 +44,9 @@ debug_type = 5  Данные перемещения мышки.
 /*
 Тип контроллера, выбрать один нужный
 */
-//#include "board_Digispark.h"
-//#include "board_ArduinoNano.h" // базовая распайка arduino nano
-#include "board_ArduinoNano_mcupower.h" // распайка сенсора на arduino nano для питания с ног микроконтроллера
+#define DIGI_SPARK
+//#define ARDUINO_NANO // базовая распайка arduino nano
+//#define ARDUINON_NANO_wPOWER  // распайка сенсора на arduino nano для питания с ног микроконтроллера
 
 //###########################################################################################
 //        Конец ручных настроек
@@ -64,6 +65,16 @@ debug_type = 5  Данные перемещения мышки.
 #endif
 #if defined(sens_type_ADNS_2620)
   #include "sensor_ADNS_2620.h"
+#endif
+
+#if defined(DIGI_SPARK)
+#include "board_Digispark.h"
+#endif
+#if defined(ARDUINO_NANO)
+#include "board_ArduinoNano.h"
+#endif
+#if defined(ARDUINON_NANO_wPOWER)
+#include "board_ArduinoNano_mcupower.h"
 #endif
 
 #if defined(debug_type) && defined(software_serial)

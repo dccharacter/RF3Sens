@@ -53,7 +53,7 @@ void setup(){
     pin_SDIO_LOW;
 
 #if defined(debug_type)
-    SERIAL_OUT.begin(115200);
+    SERIAL_OUT.begin(SERIAL_SPEED);
 #endif
 
   delay(1000);
@@ -213,13 +213,13 @@ void loop(){
 // процедуры
 //-------------------------------------------------------------------------------------------
 void ADNS_reset(void){
-#ifdef flg_ADNS_type_ADNS_5020
+#ifdef sens_type_ADNS_5020
   ADNS_write(0x3a,0x5a);
   delay(1000);
   ADNS_write(0x0d, 0x01);  // Set 1000cpi resolution
   delay(1000);
 #endif
-#ifdef flg_ADNS_type_ADNS_2610
+#if  defined(sens_type_ADNS_2610) || defined(sens_type_ADNS_2620)
   //ADNS_write(0x00,0x80);
   delay(1000);
   ADNS_write(0x00,0x01); //Always awake
