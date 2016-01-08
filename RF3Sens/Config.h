@@ -74,7 +74,7 @@ debug_type = 5  Данные перемещения мышки.
 #include "board_ArduinoNano.h"
 #endif
 #if defined(ARDUINON_NANO_wPOWER)
-#include "board_ArduinoNano_mcupower.h"
+#include "board_ArduinoNano_wPower.h"
 #endif
 
 #if defined(debug_type) && defined(software_serial)
