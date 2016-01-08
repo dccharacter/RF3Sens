@@ -1,0 +1,8 @@
+Dmitry__ (3.01.2016) :
+Надо подключать аппаратный FastPwm, т.к. у меня спаян датчик на тиньке, то оплаживаю только вариант digispark.
+Тут начинается жесткий хак. По умолчанию частота шим на дуинах всего около 500гц. Для digispark нагуглилось:
+http://forum.arduino.cc/index.php?topic=144935.15
+http://digistump.com/wiki/digispark/tricks
+http://digistump.com/board/index.php/topic,89.0.html
+T.e. в моем случае надо сделать:
+-a) added a modification to allow high speed hardware PWM on Pin0 (up to 32.2KHz), 1 (up to 64.5KHz) and 4 (up to 64.5KHz) without breaking micros(), millis(), delay() and without disturbing DigiUSB. FAVOR_PHASE_CORRECT_PWM shall be set to 0 in core_build_option.h, otherwise Pin1 can only reach 32.2KHz and not 64.5KHz.
