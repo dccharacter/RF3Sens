@@ -26,7 +26,8 @@
 #define ARRAY_WIDTH       18
 #define ARRAY_HEIGHT      18
 
-//#define Motion            0x02
+#define Configuration     0x40
+//#define Motion            0x42
 #define Delta_X           0x43
 #define Delta_Y           0x42
 #define squal             0x44

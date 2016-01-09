@@ -220,9 +220,9 @@ void ADNS_reset(void){
   delay(1000);
 #endif
 #if  defined(sens_type_ADNS_2610) || defined(sens_type_ADNS_2620)
-  //ADNS_write(0x00,0x80);
+  ADNS_write(Configuration,0x80);
   delay(1000);
-  ADNS_write(0x00,0x01); //Always awake
+  ADNS_write(Configuration,0x01); //Always awake
 #endif
 }
 
