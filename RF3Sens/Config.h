@@ -32,20 +32,20 @@ debug_type = 5  Данные перемещения мышки.
 Если не определено, для дебага используется Hardware Serial
 */
 //#define software_serial 1 // одновременно и признак софтового serial и номер ноги для передачи данных (TX PIN)
-#define SERIAL_SPEED 115200
+#define SERIAL_SPEED 230400
 
 /*
 Тип сенсора, выбрать один нужный
 */
-#define sens_type_ADNS_5020
+//#define sens_type_ADNS_5020
 //#define sens_type_ADNS_2610
-//#define sens_type_ADNS_2620
+#define sens_type_ADNS_2620
 
 /*
 Тип контроллера, выбрать один нужный
 */
-#define DIGI_SPARK
-//#define ARDUINO_NANO // базовая распайка arduino nano
+//#define DIGI_SPARK
+#define ARDUINO_NANO // базовая распайка arduino nano
 //#define ARDUINON_NANO_wPOWER  // распайка сенсора на arduino nano для питания с ног микроконтроллера
 
 //###########################################################################################
