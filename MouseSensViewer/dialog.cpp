@@ -6,6 +6,8 @@
 #include <QSpinBox>
 #include <QPushButton>
 #include <QGridLayout>
+#include <QSettings>
+#include <QApplication>
 
 #include <QtSerialPort/QSerialPortInfo>
 
@@ -54,10 +56,12 @@ Dialog::Dialog(QWidget *parent)
 	, runButton(new QPushButton(tr("Start")))
 {
 	foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
-		serialPortComboBox->addItem(info.portName());
+        serialPortComboBox->addItem(info.portName());
 
 	BaudRateComboBox->addItem("230400");
 	BaudRateComboBox->addItem("115200");
+
+    m_sSettingsFile = QApplication::applicationDirPath() + "/settings.ini";
 
 	waitResponseSpinBox->setRange(0, 10000);
 	waitResponseSpinBox->setValue(20);
@@ -75,6 +79,8 @@ Dialog::Dialog(QWidget *parent)
 
 	setWindowTitle(tr("Mouse Sensor"));
 
+    loadSettings();
+
 	serialPortComboBox->setFocus();
 
 	timer.setSingleShot(true);
@@ -85,11 +91,17 @@ Dialog::Dialog(QWidget *parent)
 			this, SLOT(readResponse()));
 	connect(&timer, SIGNAL(timeout()),
 			this, SLOT(processTimeout()));
+    connect(serialPortComboBox, SIGNAL(currentIndexChanged(int)),
+            this, SLOT(saveSettings()));
+    connect(BaudRateComboBox, SIGNAL(currentTextChanged(QString)),
+            this, SLOT(saveSettings()));
+
 }
 
 void Dialog::sendRequest()
 {
 	serial.close();
+    saveSettings();
 	serial.setPortName(serialPortComboBox->currentText());
 	serial.setBaudRate(BaudRateComboBox->currentText().toInt());
 	serial.setDataBits( QSerialPort::Data8 );
@@ -213,4 +225,25 @@ void Dialog::resizeImage(QImage *image, int ArrayWidth, int ArrayHeight, int Mas
 	//newImage.fill(qRgb(255, 255, 255));
 	newImage.setColorTable(palette);
 	*image = newImage;
+}
+
+void Dialog::loadSettings()
+{
+    QSettings settings(m_sSettingsFile, QSettings::IniFormat);
+    QString sPortName = settings.value("portName", "").toString();
+    QString sBaudRate = settings.value("portBaudRate", "").toString();
+    qint8 idx = serialPortComboBox->findText(sPortName);
+    if (idx) {
+        serialPortComboBox->setCurrentIndex(idx);
+    }
+    BaudRateComboBox->setCurrentText(sBaudRate);
+}
+
+void Dialog::saveSettings()
+{
+    QSettings settings(m_sSettingsFile, QSettings::IniFormat);
+    QString sPortName = serialPortComboBox->currentText();
+    settings.setValue("portName", sPortName);
+    QString sBaudRate = BaudRateComboBox->currentText();
+    settings.setValue("portBaudRate", sBaudRate);
 }

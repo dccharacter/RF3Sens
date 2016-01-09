@@ -29,11 +29,14 @@ private slots:
 	void sendRequest();
 	void readResponse();
 	void processTimeout();
+    void loadSettings();
+    void saveSettings();
 
 private:
 	void setControlsEnabled(bool enable);
 	void processError(const QString &error);
 	void resizeImage(QImage *image, int ArrayWidth, int ArrayHeight, int Mask);
+
 
 private:
 	int responseSize;
@@ -45,6 +48,7 @@ private:
 	QLabel *trafficLabel;
 	QLabel *statusLabel;
 	QPushButton *runButton;
+    QString m_sSettingsFile;
 
 	QSerialPort serial;
 	QByteArray response;
