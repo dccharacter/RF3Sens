@@ -39,6 +39,10 @@
 #define Pixel_Grab        0x48
 #define Mask_pixel_value  0x3f
 #define Pixel_data_valid  0x40
+#define Frame_Period      0x4b
+
+
+
 #define delay_tSWW        100
 #define delay_tSRAD       100
 

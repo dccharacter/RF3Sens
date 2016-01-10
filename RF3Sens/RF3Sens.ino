@@ -51,6 +51,8 @@ void setup(){
     pin_nClock_HIGH;
     pin_SDIO_Mode_OUTPUT;
     pin_SDIO_LOW;
+	pin_LASER_Mode_OUTPUT;
+	pin_LASER_OFF;
 
 #if defined(debug_type)
     SERIAL_OUT.begin(SERIAL_SPEED);
@@ -105,6 +107,7 @@ void loop(){
 #if debug_type ==1
 //-------------------------------------------------------------------------------------------
   byte Frame[NUM_PIXS + 6];
+  pin_LASER_ON;
 
   while(1){
     pixel_and_params_grab(Frame);
@@ -164,29 +167,42 @@ void loop(){
 #elif debug_type ==4
 //-------------------------------------------------------------------------------------------
   //Как 3-й режим, но по разрешению сигнала pin_TRIG (лог точно ограничен сигналом z_probe)
-  byte Frame[6];
+  byte Frame[12];
+  SERIAL_OUT.println(F("Squal:\tMax:\tMin:\tSum:\tShutter:\tLSqual:\tLMax:\tLMin:\tLSum:\tLShutter:"));
   while(1){
-    if(pin_TRIG_IN){
+    while(pin_TRIG_IN){
       //заголовок
-      SERIAL_OUT.println (F  ("Squal:\tMax:\tMin:\tSum:\tShutter:"));
-
-      params_grab(Frame);
-
-      ByteToString(Frame[0]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
-      ByteToString(Frame[1]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
-      ByteToString(Frame[2]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
-      ByteToString(Frame[3]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
-      Uint16ToString(Frame[4] *256 + Frame[5]);
-      SERIAL_OUT.write(Str[4]);
-      SERIAL_OUT.write(Str[3]);
-      SERIAL_OUT.write(Str[2]);
-      SERIAL_OUT.write(Str[1]);
-      SERIAL_OUT.write(Str[0]);
-      SERIAL_OUT.write(0x0a);
-      //SERIAL_OUT.write(0x0d);
+		params_grab(Frame);
+		pin_LASER_ON;
+		params_grab(Frame+6);
+		pin_LASER_OFF;
+				
+		ByteToString(Frame[0]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+		ByteToString(Frame[1]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+		ByteToString(Frame[2]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+		ByteToString(Frame[3]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+		Uint16ToString(Frame[4] * 256 + Frame[5]);
+		SERIAL_OUT.write(Str[4]);
+		SERIAL_OUT.write(Str[3]);
+		SERIAL_OUT.write(Str[2]);
+		SERIAL_OUT.write(Str[1]);
+		SERIAL_OUT.write(Str[0]);
+		SERIAL_OUT.write(0x09);
+		
+		ByteToString(Frame[6]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+		ByteToString(Frame[7]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+		ByteToString(Frame[8]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+		ByteToString(Frame[9]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+		Uint16ToString(Frame[10] * 256 + Frame[11]);
+		SERIAL_OUT.write(Str[4]);
+		SERIAL_OUT.write(Str[3]);
+		SERIAL_OUT.write(Str[2]);
+		SERIAL_OUT.write(Str[1]);
+		SERIAL_OUT.write(Str[0]);
+		SERIAL_OUT.write(0x0a);
 
 #if SERIAL_SPEED > 115200
-      delay(20);
+      //delay(10);
 #else
       delay(60);  //задержка больше из-за низкой скорости Serial
 #endif
@@ -223,6 +239,7 @@ void ADNS_reset(void){
   ADNS_write(Configuration,0x80);
   delay(1000);
   ADNS_write(Configuration,0x01); //Always awake
+  ADNS_write(Frame_Period, FR_VALUE);
 #endif
 }
 
@@ -315,6 +332,17 @@ inline void pixel_grab(uint8_t *buffer, uint16_t nBytes) {
 }
 //-------------------------------------------------------------------------------------------
 inline void params_grab(uint8_t *buffer) {
+	uint8_t temp_byte;
+
+	//reset the pixel grab counter
+	ADNS_write(Pixel_Grab, 0x00);
+
+	do {
+		temp_byte = ADNS_read(Pixel_Grab);
+	} while (!(temp_byte & Pixel_data_valid));
+
+	delayMicroseconds(FR_DELAY);
+
 	*(buffer + 0) = ADNS_read(squal);
 	*(buffer + 1) = ADNS_read(Maximum_Pixel);
 	*(buffer + 2) = ADNS_read(Minimum_Pixel);
@@ -324,8 +352,14 @@ inline void params_grab(uint8_t *buffer) {
 }
 //-------------------------------------------------------------------------------------------
 inline void pixel_and_params_grab(uint8_t *buffer) {
-	params_grab((buffer + NUM_PIXS));
+	uint8_t *pParams = buffer + NUM_PIXS;
 	pixel_grab(buffer, NUM_PIXS);
+	*(pParams + 0) = ADNS_read(squal);
+	*(pParams + 1) = ADNS_read(Maximum_Pixel);
+	*(pParams + 2) = ADNS_read(Minimum_Pixel);
+	*(pParams + 3) = ADNS_read(Pixel_Sum);
+	*(pParams + 4) = ADNS_read(Shutter_Upper);
+	*(pParams + 5) = ADNS_read(Shutter_Lower);
 }
 //-------------------------------------------------------------------------------------------
 void ByteToString(uint8_t a){
