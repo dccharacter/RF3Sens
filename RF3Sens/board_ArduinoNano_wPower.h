@@ -20,10 +20,10 @@
 #endif 
 
 //pin_led
-//PD5 D5
+//PC5 A5
 #define pin_led_bit         5
-#define pin_led_DDR         DDRD
-#define pin_led_PORT        PORTD
+#define pin_led_DDR         DDRC
+#define pin_led_PORT        PORTC
 
 //pin_nClock (SCK)
 //PB2 D10
