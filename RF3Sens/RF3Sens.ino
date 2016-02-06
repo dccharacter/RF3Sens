@@ -14,43 +14,47 @@
 #endif
 
 unsigned char Str[5];
+uint8_t RegPowLaser = 127;
 
 void setup(){
   //set pin I/O direction
   #if defined(use_nCS)
-    pin_nCS_Mode_OUTPUT;
-    pin_nCS_HIGH;
+    PIN_OUTPUT(nCS);
+    PIN_HIGH(nCS);
   #endif
-  pin_led_Mode_OUTPUT;
-  pin_led_HIGH;
-#ifdef pin_TRIG_bit
-  pin_TRIG_Mode_INPUT;
-#endif
+  PIN_OUTPUT(led);
+  PIN_HIGH(led);
+  #if defined(debug_type) && defined(TRIG_PIN)
+    PIN_INPUT(TRIG);
+  #endif
 
-#ifdef power_via_mcu
-  #ifdef pin_sensor_gnd_bit
-    pin_sensor_gnd_OUTPUT;
-    pin_sensor_gnd_LOW;
-  #endif
-  #ifdef pin_sensor_vcc_bit
-    pin_sensor_vcc_OUTPUT;
-    pin_sensor_vcc_HIGH;
-  #endif
-  #ifdef pin_laser_gnd_bit
-    pin_laser_gnd_OUTPUT;
-    pin_laser_gnd_LOW;
-  #endif
-  #ifdef pin_laser_vcc_bit
-    pin_laser_vcc_OUTPUT;
-    pin_laser_vcc_HIGH;
-  #endif
-#endif // power_via_mcu
+  #if defined(sens_power_via_mcu)
+    #if defined(sensor_gnd_PIN)
+      PIN_OUTPUT(sensor_gnd);
+      PIN_LOW(sensor_gnd);
+    #endif
+    #if defined(sensor_vcc_PIN)
+      PIN_OUTPUT(sensor_vcc);
+      PIN_HIGH(sensor_vcc);
+    #endif
+  #endif // sens_power_via_mcu
+  #if defined(laser_power_via_mcu)
+    #if defined(laser_gnd_PIN)
+      PIN_OUTPUT(laser_gnd);
+      PIN_LOW(laser_gnd);
+    #endif
+    #if defined(laser_vcc_PIN)
+      PIN_OUTPUT(laser_vcc);
+      PIN_HIGH(laser_vcc);
+      analogWrite(laser_vcc_PIN, RegPowLaser);//255=включить лазер , 0=выключить
+    #endif
+  #endif // laser_power_via_mcu
 
 //initialize SPI
-    pin_nClock_Mode_OUTPUT;
-    pin_nClock_HIGH;
-    pin_SDIO_Mode_OUTPUT;
-    pin_SDIO_LOW;
+    PIN_OUTPUT(nClock);
+    PIN_HIGH(nClock);
+    PIN_OUTPUT(SDIO);
+    PIN_LOW(SDIO);
 
 #if defined(debug_type)
     SERIAL_OUT.begin(SERIAL_SPEED);
@@ -64,17 +68,58 @@ void loop(){
 //###########################################################################################
 // штатный режим датчика для 3D принтера
 #ifndef debug_type
-  byte dataMax, dataMin, dataPix_Sum;
+  byte dataMax, dataAVG, dataSU, dataSqual;
 
   while(1){
-    dataMax = ADNS_read(Maximum_Pixel);
+    //dataMax = ADNS_read(Maximum_Pixel);
     //dataMax = ADNS_read(Pixel_Sum);
     //dataMax = ADNS_read(squal);
-
-    dataMax > ConstMax ? pin_led_LOW : pin_led_HIGH;
+    /*
+    dataSU = ADNS_read(Shutter_Upper);
+    if (dataSU != 3){
+      RefrPowerLaser(dataSU);
+    }*/
+    dataSqual = ADNS_read(squal);
+    dataMax = ADNS_read(Maximum_Pixel);
+    dataAVG = ADNS_read(Pixel_Sum);
+    //dataMax > ConstMax  ? PIN_LOW(led) : PIN_HIGH(led);
+    dataAVG < 65 && dataMax > ConstMax && dataSqual > 45 ? PIN_LOW(led) : PIN_HIGH(led);
+    //dataMax > ConstMax && dataSqual > 45 ? PIN_LOW(led) : PIN_HIGH(led);
+/*
+    dataMax = ADNS_read(Maximum_Pixel);
+    if (dataMax > ConstMax){
+      dataSU = ADNS_read(Shutter_Upper);
+      while(dataSU != 2 ){
+        PIN_HIGH(led);
+        RefrPowerLaser(dataSU);
+        dataSU = ADNS_read(Shutter_Upper);
+      }
+      PIN_LOW(led);
+      //dataMax = ADNS_read(Maximum_Pixel);
+      //dataMax > ConstMax ? PIN_LOW(led) : PIN_HIGH(led);
+    } else {
+      PIN_HIGH(led);
+      dataSU = ADNS_read(Shutter_Upper);
+      RefrPowerLaser(dataSU);
+    }
+*/
+    
+/*    
+    dataSU = ADNS_read(Shutter_Upper);
+    if (dataSU < 3){
+        dataMax = ADNS_read(Maximum_Pixel);
+        RefrPowerLaser(dataMax);
+        dataMax > ConstMax ? PIN_LOW(led) : PIN_HIGH(led);
+    } else {
+      PIN_HIGH(led);
+    }
+*/
+  
+    //dataMax > ConstMax ? PIN_LOW(led) : PIN_HIGH(led);
+    //((dataSU == 0) && (dataSL < 60)) ? PIN_LOW(led) : PIN_HIGH(led);
 
 /*
-    pin_led_HIGH;
+    PIN_HIGH(led);
     while(1){ //шаг1
       dataMax = ADNS_read(Maximum_Pixel);
       if(dataMax > ConstMax) break;
@@ -90,7 +135,7 @@ void loop(){
       dataPix_Sum = ADNS_read(Pixel_Sum);
       if(dataMax > (ConstMax -2) && dataMin < (ConstMin +2) && dataPix_Sum > ConstPixMin && dataPix_Sum < ConstPixMax) break;
     }
-    pin_led_LOW;
+    PIN_LOW(led);
 
     while(1){ //ожидание подьема головы
       dataMax = ADNS_read(Maximum_Pixel);
@@ -104,17 +149,20 @@ void loop(){
 //-------------------------------------------------------------------------------------------
 #if debug_type ==1
 //-------------------------------------------------------------------------------------------
-  byte Frame[NUM_PIXS + 6];
+  byte Frame[NUM_PIXS + 7],dataMax, dataSU;
 
   while(1){
     pixel_and_params_grab(Frame);
-    SERIAL_OUT.write(Frame, NUM_PIXS + 6); // send frame in raw format
+    SERIAL_OUT.write(Frame, NUM_PIXS + 7); // send frame in raw format
+    dataSU = Frame[4+NUM_PIXS];
+    dataMax = Frame[1+NUM_PIXS];
+    //RefrPowerLaser(dataSU);
     //delay(2);
   }
 //-------------------------------------------------------------------------------------------
 #elif debug_type ==2
 //-------------------------------------------------------------------------------------------
-  byte Frame[NUM_PIXS + 6];
+  byte Frame[NUM_PIXS + 7];
 
   byte data;
   while(1){
@@ -123,21 +171,21 @@ void loop(){
     //data = ADNS_read(Pixel_Sum);
 
     if(data > ConstMax){
-      pin_led_LOW;
+      PIN_LOW(led);
     }
     else{
-      pin_led_HIGH;
+      PIN_HIGH(led);
       pixel_and_params_grab(Frame);
-      SERIAL_OUT.write(Frame, NUM_PIXS+6); // send frame in raw format
+      SERIAL_OUT.write(Frame, NUM_PIXS+7); // send frame in raw format
     }
   }
 //-------------------------------------------------------------------------------------------
 #elif debug_type ==3
 //-------------------------------------------------------------------------------------------
   //листинг для электронных таблиц: В шапке названия, дальше только данные разделенные "tab".
-  byte Frame[6];
+  byte Frame[7];
   //заголовок
-  SERIAL_OUT.println  (F  ("Squal:\tMax:\tMin:\tSum:\tShutter:"));
+  SERIAL_OUT.println  (F  ("Squal:\tMax:\tMin:\tSum:\tShutter:\tLaserPower:"));
   while(1){
     params_grab(Frame);
 
@@ -146,6 +194,8 @@ void loop(){
     ByteToString(Frame[2]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
     ByteToString(Frame[3]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
     Uint16ToString(Frame[4] *256 + Frame[5]);
+    ByteToString(Frame[6]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+    SERIAL_OUT.write(Str[6]);
     SERIAL_OUT.write(Str[4]);
     SERIAL_OUT.write(Str[3]);
     SERIAL_OUT.write(Str[2]);
@@ -164,11 +214,11 @@ void loop(){
 #elif debug_type ==4
 //-------------------------------------------------------------------------------------------
   //Как 3-й режим, но по разрешению сигнала pin_TRIG (лог точно ограничен сигналом z_probe)
-  byte Frame[6];
+  byte Frame[7];
   while(1){
-    if(pin_TRIG_IN){
+    if(PIN_IN(TRIG)){
       //заголовок
-      SERIAL_OUT.println (F  ("Squal:\tMax:\tMin:\tSum:\tShutter:"));
+      SERIAL_OUT.println (F  ("Squal:\tMax:\tMin:\tSum:\tShutter:\tLaserPower:"));
 
       params_grab(Frame);
 
@@ -177,6 +227,8 @@ void loop(){
       ByteToString(Frame[2]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
       ByteToString(Frame[3]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
       Uint16ToString(Frame[4] *256 + Frame[5]);
+      ByteToString(Frame[6]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+      SERIAL_OUT.write(Str[6]);
       SERIAL_OUT.write(Str[4]);
       SERIAL_OUT.write(Str[3]);
       SERIAL_OUT.write(Str[2]);
@@ -212,6 +264,26 @@ void loop(){
 //###########################################################################################
 // процедуры
 //-------------------------------------------------------------------------------------------
+void RefrPowerLaser(uint8_t dataSU)
+{
+  if (dataSU < 3 ){
+      while (dataSU < 3 && RegPowLaser > 1){
+          RegPowLaser--;
+          analogWrite(laser_vcc_PIN,RegPowLaser);
+          delayMicroseconds(800);
+          dataSU = ADNS_read(Shutter_Upper);
+      }
+  }else if (dataSU > 3){
+      while( dataSU > 3 && RegPowLaser < 255){
+          RegPowLaser++;
+          analogWrite(laser_vcc_PIN,RegPowLaser);
+          delayMicroseconds(800);
+          dataSU = ADNS_read(Shutter_Upper);
+      }
+  }
+}
+
+//-------------------------------------------------------------------------------------------
 void ADNS_reset(void){
 #ifdef sens_type_ADNS_5020
   ADNS_write(0x3a,0x5a);
@@ -229,49 +301,49 @@ void ADNS_reset(void){
 //-------------------------------------------------------------------------------------------
 void ADNS_write(byte address, byte data){
   #if defined(use_nCS)
-    pin_nCS_LOW;
+    PIN_LOW(nCS);
   #endif
   // send in the address and value via SPI:
   address |= 0x80;  //признак записи адреса
   for (byte i = 0x80; i; i >>= 1){
-    pin_nClock_LOW;
-    address & i ? pin_SDIO_HIGH : pin_SDIO_LOW;
+    PIN_LOW(nClock);
+    address & i ? PIN_HIGH(SDIO) : PIN_LOW(SDIO);
     asm volatile ("nop");
-    pin_nClock_HIGH;
+    PIN_HIGH(nClock);
   }
 
   //delayMicroseconds(1);
 
   for (byte i = 0x80; i; i >>= 1){
-    pin_nClock_LOW;
-    data & i ? pin_SDIO_HIGH : pin_SDIO_LOW;
+    PIN_LOW(nClock);
+    data & i ? PIN_HIGH(SDIO) : PIN_LOW(SDIO);
     asm volatile ("nop");
-    pin_nClock_HIGH;
+    PIN_HIGH(nClock);
   }
   //t SWW. SPI Time between Write Commands
   delayMicroseconds(delay_tSWW);
 
   #if defined(use_nCS)
-    pin_nCS_HIGH;
+    PIN_HIGH(nCS);
   #endif
 }
 
 //-------------------------------------------------------------------------------------------
 byte ADNS_read(byte address){
   #if defined(use_nCS)
-    pin_nCS_LOW;
+    PIN_LOW(nCS);
   #endif
 
   address &= ~0x80;  //признак записи данных
   for (byte i = 0x80; i; i >>= 1){
-    pin_nClock_LOW;
-    address & i ? pin_SDIO_HIGH : pin_SDIO_LOW;
+    PIN_LOW(nClock);
+    address & i ? PIN_HIGH(SDIO) : PIN_LOW(SDIO);
     asm volatile ("nop");
-    pin_nClock_HIGH;
+    PIN_HIGH(nClock);
   }
 
   // prepare io pin for reading
-  pin_SDIO_Mode_INPUT;
+  PIN_INPUT(SDIO);
 
   // t SRAD. SPI Read Address-Data Delay
   delayMicroseconds(delay_tSRAD);
@@ -280,17 +352,17 @@ byte ADNS_read(byte address){
   byte data = 0;
   for (byte i = 8; i; i--){
     // tick, tock, read
-    pin_nClock_LOW;
+    PIN_LOW(nClock);
     asm volatile ("nop");
-    pin_nClock_HIGH;
+    PIN_HIGH(nClock);
     data <<= 1;
-    if (pin_SDIO_IN) data |= 0x01;
+    if (PIN_IN(SDIO)) data |= 0x01;
   }
 
   #if defined(use_nCS)
-    pin_nCS_HIGH;
+    PIN_HIGH(nCS);
   #endif
-  pin_SDIO_Mode_OUTPUT;
+  PIN_OUTPUT(SDIO);
 
   // t SRW & t SRR = 1μs.
   delayMicroseconds(2);
@@ -321,6 +393,7 @@ inline void params_grab(uint8_t *buffer) {
 	*(buffer + 3) = ADNS_read(Pixel_Sum);
 	*(buffer + 4) = ADNS_read(Shutter_Upper);
 	*(buffer + 5) = ADNS_read(Shutter_Lower);
+  *(buffer + 6) = RegPowLaser;
 }
 //-------------------------------------------------------------------------------------------
 inline void pixel_and_params_grab(uint8_t *buffer) {
