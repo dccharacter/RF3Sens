@@ -194,13 +194,13 @@ void loop(){
     ByteToString(Frame[2]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
     ByteToString(Frame[3]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
     Uint16ToString(Frame[4] *256 + Frame[5]);
-    ByteToString(Frame[6]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
-    SERIAL_OUT.write(Str[6]);
     SERIAL_OUT.write(Str[4]);
     SERIAL_OUT.write(Str[3]);
     SERIAL_OUT.write(Str[2]);
     SERIAL_OUT.write(Str[1]);
     SERIAL_OUT.write(Str[0]);
+    SERIAL_OUT.write(0x09);
+    ByteToString(Frame[6]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
     SERIAL_OUT.write(0x0a);
     //SERIAL_OUT.write(0x0d);
 
@@ -227,13 +227,13 @@ void loop(){
       ByteToString(Frame[2]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
       ByteToString(Frame[3]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
       Uint16ToString(Frame[4] *256 + Frame[5]);
-      ByteToString(Frame[6]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
-      SERIAL_OUT.write(Str[6]);
       SERIAL_OUT.write(Str[4]);
       SERIAL_OUT.write(Str[3]);
       SERIAL_OUT.write(Str[2]);
       SERIAL_OUT.write(Str[1]);
       SERIAL_OUT.write(Str[0]);
+      SERIAL_OUT.write(0x09);
+      ByteToString(Frame[6]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
       SERIAL_OUT.write(0x0a);
       //SERIAL_OUT.write(0x0d);
 
