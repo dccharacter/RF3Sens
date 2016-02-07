@@ -14,7 +14,7 @@
 #endif
 
 unsigned char Str[5];
-uint8_t RegPowLaser = 127;
+uint8_t RegPowLaser = 200;
 
 void setup(){
   //set pin I/O direction
@@ -68,80 +68,38 @@ void loop(){
 //###########################################################################################
 // штатный режим датчика для 3D принтера
 #ifndef debug_type
-  byte dataMax, dataAVG, dataSU, dataSqual;
-
+  byte dataMax, dataAVG, dataSU, dataSqual, maxSqual;
+  boolean laser_in_sight=false, sensed = false;
   while(1){
     //dataMax = ADNS_read(Maximum_Pixel);
-    //dataMax = ADNS_read(Pixel_Sum);
-    //dataMax = ADNS_read(squal);
-    /*
-    dataSU = ADNS_read(Shutter_Upper);
-    if (dataSU != 3){
-      RefrPowerLaser(dataSU);
-    }*/
-    dataSqual = ADNS_read(squal);
-    dataMax = ADNS_read(Maximum_Pixel);
-    dataAVG = ADNS_read(Pixel_Sum);
-    //dataMax > ConstMax  ? PIN_LOW(led) : PIN_HIGH(led);
-    dataAVG < 65 && dataMax > ConstMax && dataSqual > 45 ? PIN_LOW(led) : PIN_HIGH(led);
-    //dataMax > ConstMax && dataSqual > 45 ? PIN_LOW(led) : PIN_HIGH(led);
-/*
-    dataMax = ADNS_read(Maximum_Pixel);
-    if (dataMax > ConstMax){
-      dataSU = ADNS_read(Shutter_Upper);
-      while(dataSU != 2 ){
-        PIN_HIGH(led);
-        RefrPowerLaser(dataSU);
-        dataSU = ADNS_read(Shutter_Upper);
-      }
-      PIN_LOW(led);
-      //dataMax = ADNS_read(Maximum_Pixel);
-      //dataMax > ConstMax ? PIN_LOW(led) : PIN_HIGH(led);
-    } else {
-      PIN_HIGH(led);
-      dataSU = ADNS_read(Shutter_Upper);
-      RefrPowerLaser(dataSU);
-    }
-*/
-    
-/*    
-    dataSU = ADNS_read(Shutter_Upper);
-    if (dataSU < 3){
+    //dataAVG = ADNS_read(Pixel_Sum);
+    //dataSqual = ADNS_read(squal);
+    //dataSU = ADNS_read(Shutter_Upper);
+
+    if (laser_in_sight){ // пятно лазера в поле зрения 
+      if (sensed){// максимум качества поверхности пройден
+        PIN_LOW(led);
+        maxSqual = 0;
         dataMax = ADNS_read(Maximum_Pixel);
-        RefrPowerLaser(dataMax);
-        dataMax > ConstMax ? PIN_LOW(led) : PIN_HIGH(led);
-    } else {
-      PIN_HIGH(led);
+        dataMax>ConstMax ? laser_in_sight=true : laser_in_sight=false;
+      } else { // поиск максимума качества
+        dataSqual = ADNS_read(squal);
+        if (dataSqual >= maxSqual){ // качество поверхности растет (пятно лазера приближается к центру)
+          maxSqual=dataSqual;
+        } else {
+          PIN_LOW(led); sensed=true; // качество уменьшается, лучше не станет - срабатываем
+        }
+      }
+    } else { // пятна лазера в поле зрения нету
+      dataMax = ADNS_read(Maximum_Pixel);
+      dataMax>ConstMax ? laser_in_sight=true : laser_in_sight=false;
+      PIN_HIGH(led); sensed=false;
     }
-*/
-  
-    //dataMax > ConstMax ? PIN_LOW(led) : PIN_HIGH(led);
-    //((dataSU == 0) && (dataSL < 60)) ? PIN_LOW(led) : PIN_HIGH(led);
 
-/*
-    PIN_HIGH(led);
-    while(1){ //шаг1
-      dataMax = ADNS_read(Maximum_Pixel);
-      if(dataMax > ConstMax) break;
-    }
-    while(1){ //шаг2
-      dataMax = ADNS_read(Maximum_Pixel);
-      dataMin = ADNS_read(Minimum_Pixel);
-      if(dataMax >(ConstMax -2) && dataMin < ConstMin) break;
-    }
-    while(1){ //шаг3
-      dataMax = ADNS_read(Maximum_Pixel);
-      dataMin = ADNS_read(Minimum_Pixel);
-      dataPix_Sum = ADNS_read(Pixel_Sum);
-      if(dataMax > (ConstMax -2) && dataMin < (ConstMin +2) && dataPix_Sum > ConstPixMin && dataPix_Sum < ConstPixMax) break;
-    }
-    PIN_LOW(led);
+    //dataMax = ADNS_read(Maximum_Pixel);
+    //RefrPowerLaser(dataMax);
 
-    while(1){ //ожидание подьема головы
-      dataMax = ADNS_read(Maximum_Pixel);
-      if(dataMax < ConstMax -2) break;
-    }
-*/
+      //dataMax > ConstMax && dataSqual > 45 ? PIN_LOW(led) : PIN_HIGH(led);
   }
 //###########################################################################################
 // отладочные режимы
@@ -264,22 +222,15 @@ void loop(){
 //###########################################################################################
 // процедуры
 //-------------------------------------------------------------------------------------------
-void RefrPowerLaser(uint8_t dataSU)
+void RefrPowerLaser(uint8_t power)
 {
-  if (dataSU < 3 ){
-      while (dataSU < 3 && RegPowLaser > 1){
-          RegPowLaser--;
-          analogWrite(laser_vcc_PIN,RegPowLaser);
-          delayMicroseconds(800);
-          dataSU = ADNS_read(Shutter_Upper);
-      }
-  }else if (dataSU > 3){
-      while( dataSU > 3 && RegPowLaser < 255){
-          RegPowLaser++;
-          analogWrite(laser_vcc_PIN,RegPowLaser);
-          delayMicroseconds(800);
-          dataSU = ADNS_read(Shutter_Upper);
-      }
+  if (power > (ConstMax+5) && RegPowLaser > 1){
+    RegPowLaser--;
+    analogWrite(laser_vcc_PIN,RegPowLaser);
+  }
+  if (power < (ConstMax-5) && RegPowLaser < 255){
+    RegPowLaser++;
+    analogWrite(laser_vcc_PIN,RegPowLaser);
   }
 }
 
