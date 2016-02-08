@@ -42,6 +42,12 @@ debug_type = 5  Данные перемещения мышки.
 #define sens_type_ADNS_2620
 
 /*
+Используем ли питание с контроллера
+*/
+#define laser_power_via_mcu // режим питания лазера с ног микроконтроллера (подаем питание на нужные ноги)
+//#define sens_power_via_mcu // режим питания сенсора с ног микроконтроллера (подаем питание на нужные ноги)
+
+/*
 Тип контроллера, выбрать один нужный
 */
 //#define DIGI_SPARK
@@ -87,60 +93,18 @@ debug_type = 5  Данные перемещения мышки.
 
 //###########################################################################################
 //        Определения
+// за пример красивого определения спасибо Денису Константинову aka linvinus  roboforum.ru
 //###########################################################################################
-#if defined(use_nCS)
-  #define pin_nCS_Mode_OUTPUT     pin_nCS_DDR       |= (1<<pin_nCS_bit)
-  #define pin_nCS_LOW             pin_nCS_PORT      &=~(1<<pin_nCS_bit)
-  #define pin_nCS_HIGH            pin_nCS_PORT      |= (1<<pin_nCS_bit)
-#else
-  #define pin_nCS_Mode_OUTPUT
-  #define pin_nCS_LOW
-  #define pin_nCS_HIGH
-#endif 
-
-#if defined(debug_type) && defined(__AVR_ATtiny85__)
-  #define pin_led_Mode_OUTPUT   1
-  #define pin_led_HIGH          1
-  #define pin_led_LOW           1
-  #define pin_led_Toggle        1
-#else
-  #define pin_led_Mode_OUTPUT   pin_led_DDR       |= (1<<pin_led_bit)
-  #define pin_led_HIGH          pin_led_PORT      |= (1<<pin_led_bit)
-  #define pin_led_LOW           pin_led_PORT      &=~(1<<pin_led_bit)
-  #define pin_led_Toggle        pin_led_PORT      ^= (1<<pin_led_bit)
-#endif
-
-#define pin_nClock_Mode_OUTPUT  pin_nClock_DDR    |= (1<<pin_nClock_bit)
-#define pin_nClock_LOW          pin_nClock_PORT   &=~(1<<pin_nClock_bit)
-#define pin_nClock_HIGH         pin_nClock_PORT   |= (1<<pin_nClock_bit)
-
-#define pin_SDIO_Mode_INPUT     pin_SDIO_DDR      &=~(1<<pin_SDIO_bit)
-#define pin_SDIO_Mode_OUTPUT    pin_SDIO_DDR      |= (1<<pin_SDIO_bit)
-#define pin_SDIO_LOW            pin_SDIO_PORT     &=~(1<<pin_SDIO_bit)
-#define pin_SDIO_HIGH           pin_SDIO_PORT     |= (1<<pin_SDIO_bit)
-#define pin_SDIO_IN             pin_SDIO_PORT_IN  &  (1<<pin_SDIO_bit)
-
-#define pin_TRIG_Mode_INPUT     pin_TRIG_DDR      &=~(1<<pin_TRIG_bit)
-#define pin_TRIG_IN             pin_TRIG_PORT_IN  &  (1<<pin_TRIG_bit)
+#define GET_PIN(x) x ## _PIN
+#define GET_DDR(x) x ## _DDR
+#define GET_PORT(x) x ## _PORT
+#define GET_IN(x) x ## _IN
+  
+#define PIN_OUTPUT(PIN)   GET_DDR(PIN) |= (1<<GET_PIN(PIN))
+#define PIN_INPUT(PIN)   GET_DDR(PIN) &=~(1<<GET_PIN(PIN))
+#define PIN_LOW(PIN)   GET_PORT(PIN) &=~(1<<GET_PIN(PIN))
+#define PIN_HIGH(PIN)   GET_PORT(PIN) |= (1<<GET_PIN(PIN))
+#define PIN_TOGGLE(PIN)   GET_PORT(PIN) ^= (1<<GET_PIN(PIN))
+#define PIN_IN(PIN)   GET_IN(PIN) & (1<<GET_PIN(PIN))
 
 #define NUM_PIXS (ARRAY_WIDTH * ARRAY_HEIGHT)
-
-#ifdef power_via_mcu
-  #ifdef pin_sensor_gnd_bit
-    #define pin_sensor_gnd_OUTPUT  pin_sensor_gnd_DDR    |= (1<<pin_sensor_gnd_bit)
-    #define pin_sensor_gnd_LOW     pin_sensor_gnd_PORT   &=~(1<<pin_sensor_gnd_bit)
-  #endif
-  #ifdef pin_sensor_vcc_bit
-    #define pin_sensor_vcc_OUTPUT  pin_sensor_vcc_DDR    |= (1<<pin_sensor_vcc_bit)
-    #define pin_sensor_vcc_HIGH    pin_sensor_vcc_PORT   |= (1<<pin_sensor_vcc_bit)
-  #endif
-  #ifdef pin_laser_gnd_bit
-    #define pin_laser_gnd_OUTPUT   pin_laser_gnd_DDR     |= (1<<pin_laser_gnd_bit)
-    #define pin_laser_gnd_LOW      pin_laser_gnd_PORT    &=~(1<<pin_laser_gnd_bit)
-  #endif
-  #ifdef pin_laser_vcc_bit
-    #define pin_laser_vcc_OUTPUT   pin_laser_vcc_DDR     |= (1<<pin_laser_vcc_bit)
-    #define pin_laser_vcc_HIGH     pin_laser_vcc_PORT    |= (1<<pin_laser_vcc_bit)
-  #endif
-#endif // power_via_mcu
-

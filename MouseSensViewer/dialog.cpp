@@ -140,11 +140,11 @@ void Dialog::processTimeout()
 
 	if(response.size() != responseSize || responseSize ==0)
 	{
-		if(response.size() ==(15*15 +6))
+		if(response.size() ==(15*15 +7))
 		{
 			resizeImage(&image,15,15,128);
 		}
-		else if(response.size() ==(18*18 +6))
+		else if(response.size() ==(18*18 +7))
 		{
 			resizeImage(&image,18,18,64);
 		}
@@ -158,12 +158,14 @@ void Dialog::processTimeout()
 	else
 	{
 		IndexData = RegArrayWidth * RegArrayHeight;
-		trafficLabel->setText(tr("Max: %1, Min: %2, Ave: %3, Shut: %4, Squal: %5")
+		trafficLabel->setText(tr("Max: %1, Min: %2, Ave: %3, Shut: %4, Squal: %5, LaserPower: %6")
 							.arg((int)*(response.data()+IndexData+1)) //MAX_PIXEL
 							.arg((unsigned char)*(response.data()+IndexData+2)) //MIN_PIXEL
 							.arg((unsigned char)*(response.data()+IndexData+3)) //AVE
 							.arg((unsigned int)(((unsigned char)*(response.data()+IndexData+4)*256)+((unsigned char)*(response.data()+IndexData+5))))
-							.arg((int)*(response.data()+IndexData))); //SQUAL
+							.arg((int)*(response.data()+IndexData)) //SQUAL
+              .arg((unsigned char)*(response.data()+IndexData+6))); //LASER_POWER
+
 
 		for (int y = 0; y < image.height(); y++)
 		{
