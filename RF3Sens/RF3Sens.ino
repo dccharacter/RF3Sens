@@ -13,6 +13,15 @@
   #include <SendOnlySoftwareSerial.h>
 #endif
 
+byte ADNS_read(uint8_t address);
+void ADNS_reset(void);
+void ADNS_write(uint8_t addr, uint8_t data);
+inline void params_grab(uint8_t *buffer);
+inline void pixel_grab(uint8_t *buffer, uint16_t nBytes); 
+inline void pixel_and_params_grab(uint8_t *buffer);
+void ByteToString(uint8_t a);
+void Uint16ToString(uint16_t a);
+
 unsigned char Str[5];
 uint8_t RegPowLaser = 200;
 
@@ -326,7 +335,7 @@ inline void pixel_grab(uint8_t *buffer, uint16_t nBytes) {
   //reset the pixel grab counter
   ADNS_write(Pixel_Grab, 0x00);
 
-  for (int count = 0; count < nBytes; count++) {
+  for (uint16_t count = 0; count < nBytes; count++) {
     while (1) {
       temp_byte = ADNS_read(Pixel_Grab);
       if (temp_byte & Pixel_data_valid) {
