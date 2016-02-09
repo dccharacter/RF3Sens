@@ -21,8 +21,9 @@ debug_type = 2  Для теста точности позиционирован�
 debug_type = 3  Передача в текстовом виде на терминал данных: Max_Pix, Min_Pix, Pix_Sum, Shutter
 debug_type = 4  Как 3-й режим, но по разрешению сигнала pin_TRIG (лог точно ограничен сигналом z_probe)
 debug_type = 5  Данные перемещения мышки.
+debug_type = 6 Тестирование режима двойного лазера
 */
-#define debug_type 1
+#define debug_type 1 
 #define NUM_SAMPLES_PER_MEASURE 5 //количество данных для 4-го режима
 
 /*
@@ -52,7 +53,8 @@ debug_type = 5  Данные перемещения мышки.
 */
 //#define DIGI_SPARK
 //#define ARDUINO_NANO // базовая распайка arduino nano
-#define ARDUINON_NANO_wPOWER  // распайка сенсора на arduino nano для питания с ног микроконтроллера
+//#define ARDUINO_NANO_wPOWER  // распайка сенсора на arduino nano для питания с ног микроконтроллера
+#define ARDUINO_NANO_DOUBLE_LASER
 
 /*
 Алгоритм детектирования, выбрать один нужный
@@ -99,6 +101,9 @@ debug_type = 5  Данные перемещения мышки.
 #endif
 #if defined(ARDUINON_NANO_wPOWER)
 #include "boards/ArduinoNano.h"
+#endif
+#if defined(ARDUINO_NANO_DOUBLE_LASER)
+#include "board_ArduinoNano_doubleLaser.h"
 #endif
 
 #if defined(debug_type) && defined(software_serial)

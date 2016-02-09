@@ -58,6 +58,8 @@ void setup(){
       analogWrite(LASER_VCC_PIN, RegPowLaser);//255=включить лазер , 0=выключить
     #endif
   #endif // laser_power_via_mcu
+      PIN_OUTPUT(laser1_vcc);
+      PIN_OUTPUT(laser2_vcc);
 
 //initialize SPI
     PIN_OUTPUT(NCLOCK);
@@ -249,6 +251,46 @@ void loop(){
     }
   }
 //-------------------------------------------------------------------------------------------
+#elif debug_type ==6
+//-------------------------------------------------------------------------------------------
+  uint8_t Frame[7];
+  uint8_t laserId = 0; // 0 = off; 1 = laser 1; 2 = laser 2; 
+  //заголовок
+
+  SERIAL_OUT.println  (F  ("Squal:\tMax:\tMin:\tSum:\tShutter:\tLaserId:"));
+  while(1){
+  if (laserId == 1) {
+	  PIN_HIGH(laser1_vcc);
+  }
+    params_grab(Frame);
+
+  if (laserId == 1) {
+	  PIN_LOW(laser1_vcc);
+	  laserId = 0;
+  } else {
+	  laserId = 1;
+  }
+    ByteToString(Frame[0]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+    ByteToString(Frame[1]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+    ByteToString(Frame[2]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+    ByteToString(Frame[3]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+    Uint16ToString(Frame[4] *256 + Frame[5]);
+    SERIAL_OUT.write(Str[4]);
+    SERIAL_OUT.write(Str[3]);
+    SERIAL_OUT.write(Str[2]);
+    SERIAL_OUT.write(Str[1]);
+    SERIAL_OUT.write(Str[0]);
+    SERIAL_OUT.write(0x09);
+    ByteToString(laserId); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+    SERIAL_OUT.write(0x0d);
+    SERIAL_OUT.write(0x0a);
+
+#if SERIAL_SPEED > 115200
+      delay(20);
+#else
+      delay(60);  //задержка больше из-за низкой скорости Serial
+#endif
+  }
 #endif
 #endif
 }
