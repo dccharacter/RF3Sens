@@ -79,12 +79,19 @@ void loop(){
 #ifndef debug_type
 #define MA_LONG 20 // глубина длинной среднескользящей
 #define MA_SHORT 5 // глубина короткой среднескользящей
-  byte dataMax, dataAVG, dataSU, dataSqual[MA_LONG];
+
+#if defined(Algo_MaxPix)
+  byte dataMax;
+#endif
+
+#if defined(Algo_MaxSqualMA)
+  byte dataSqual[MA_LONG];
   float MALongSqual,MAShortSqual;
   boolean laser_in_sight=false, sensed = false, SqualGrow = false;
 
   for (byte x=0 ; x<MA_LONG ; x++){dataSqual[x]=0;};
   MALongSqual=0; MAShortSqual=0;
+#endif
   
   while(1){
     //dataMax = ADNS_read(ADNS_MAX_PIX);
@@ -92,6 +99,14 @@ void loop(){
     //dataSqual = ADNS_read(ADNS_SQUAL);
     //dataSU = ADNS_read(ADNS_SHUTTER_UPPER);
 
+//-------------------------------------------------------------------------------------------
+#if defined(Algo_MaxPix)
+    dataMax = ADNS_read(ADNS_MAX_PIX);
+    //RefrPowerLaser(dataMax);
+    dataMax > ADNS_CONST_MAX ? PIN_LOW(LED) : PIN_HIGH(LED);
+#endif //Algo_MaxPix
+//-------------------------------------------------------------------------------------------
+#if defined(Algo_MaxSqualMA)
     if (laser_in_sight){ // пятно лазера в поле зрения 
       if (sensed){// максимум качества поверхности пройден
         PIN_LOW(LED);
@@ -117,11 +132,8 @@ void loop(){
       dataMax = ADNS_read(ADNS_MAX_PIX);
       dataMax>ADNS_CONST_MAX ? laser_in_sight=true : laser_in_sight=false;
     }
-
-    //dataMax = ADNS_read(ADNS_MAX_PIX);
-    //RefrPowerLaser(dataMax);
-
-      //dataMax > ADNS_CONST_MAX && dataSqual > 45 ? PIN_LOW(LED) : PIN_HIGH(LED);
+#endif // Algo_MaxSqualMA
+//-------------------------------------------------------------------------------------------
   }
 //###########################################################################################
 // отладочные режимы
