@@ -13,6 +13,15 @@
   #include <SendOnlySoftwareSerial.h>
 #endif
 
+byte ADNS_read(uint8_t address);
+void ADNS_reset(void);
+void ADNS_write(uint8_t addr, uint8_t data);
+inline void params_grab(uint8_t *buffer);
+inline void pixel_grab(uint8_t *buffer, uint16_t nBytes); 
+inline void pixel_and_params_grab(uint8_t *buffer);
+void ByteToString(uint8_t a);
+void Uint16ToString(uint16_t a);
+
 unsigned char Str[5];
 uint8_t RegPowLaser = 200;
 
@@ -159,8 +168,8 @@ void loop(){
     SERIAL_OUT.write(Str[0]);
     SERIAL_OUT.write(0x09);
     ByteToString(Frame[6]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+    SERIAL_OUT.write(0x0d);
     SERIAL_OUT.write(0x0a);
-    //SERIAL_OUT.write(0x0d);
 
 #if SERIAL_SPEED > 115200
       delay(20);
@@ -222,6 +231,7 @@ void loop(){
 //###########################################################################################
 // процедуры
 //-------------------------------------------------------------------------------------------
+#if defined(laser_power_via_mcu)
 void RefrPowerLaser(uint8_t power)
 {
   if (power > (ConstMax+5) && RegPowLaser > 1){
@@ -233,7 +243,7 @@ void RefrPowerLaser(uint8_t power)
     analogWrite(laser_vcc_PIN,RegPowLaser);
   }
 }
-
+#endif
 //-------------------------------------------------------------------------------------------
 void ADNS_reset(void){
 #ifdef sens_type_ADNS_5020
@@ -326,7 +336,7 @@ inline void pixel_grab(uint8_t *buffer, uint16_t nBytes) {
   //reset the pixel grab counter
   ADNS_write(Pixel_Grab, 0x00);
 
-  for (int count = 0; count < nBytes; count++) {
+  for (uint16_t count = 0; count < nBytes; count++) {
     while (1) {
       temp_byte = ADNS_read(Pixel_Grab);
       if (temp_byte & Pixel_data_valid) {
