@@ -32,26 +32,26 @@
 
 //PB0(MOSI) 5 pin
 #if defined(laser_power_via_mcu)
-  #define laser_vcc_PIN   0
-  #define laser_vcc_DDR   DDRB
-  #define laser_vcc_PORT  PORTB
+  #define LASER_VCC_PIN   0
+  #define LASER_VCC_DDR   DDRB
+  #define LASER_VCC_PORT  PORTB
 #endif //laser_power_via_mcu
 
 //PB1(MISO)  6pin
-#define led_PIN     1
-#define led_DDR     DDRB
-#define led_PORT    PORTB
+#define LED_PIN     1
+#define LED_DDR     DDRB
+#define LED_PORT    PORTB
 
 //PB2(SCK/ADC1) 7pin
-#define nClock_PIN    2
-#define nClock_DDR    DDRB
-#define nClock_PORT   PORTB
+#define NCLOCK_PIN    2
+#define NCLOCK_DDR    DDRB
+#define NCLOCK_PORT   PORTB
 
-#if defined(use_nCS)
+#if defined(use_NCS)
   //PB3(ADC3) 1pin
-  #define nCS_PIN       3
-  #define nCS_DDR       DDRB
-  #define nCS_PORT      PORTB
+  #define NCS_PIN       3
+  #define NCS_DDR       DDRB
+  #define NCS_PORT      PORTB
 #endif
 
 //PB4(usb Digispark) 3 pin

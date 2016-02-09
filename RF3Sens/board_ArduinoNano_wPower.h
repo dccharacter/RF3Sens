@@ -10,24 +10,24 @@
 
 /* board_ArduinoNano_wPower.h */
 
-#if defined(use_nCS)
-  //pin_nCS  PB2 SS D10
-  #define nCS_PIN        2
-  #define nCS_DDR        DDRB
-  #define nCS_PORT       PORTB
+#if defined(use_NCS)
+  //pin_NCS  PB2 SS D10
+  #define NCS_PIN        2
+  #define NCS_DDR        DDRB
+  #define NCS_PORT       PORTB
 #endif 
 
 //pin_led
 //PC5 A5
-#define led_PIN         5
-#define led_DDR         DDRC
-#define led_PORT        PORTC
+#define LED_PIN         5
+#define LED_DDR         DDRC
+#define LED_PORT        PORTC
 
 //pin_nClock (SCK)
 //PB2 D10
-#define nClock_PIN      2
-#define nClock_DDR      DDRB
-#define nClock_PORT     PORTB
+#define NCLOCK_PIN      2
+#define NCLOCK_DDR      DDRB
+#define NCLOCK_PORT     PORTB
 
 //MOSI
 //PB5  D13
@@ -44,25 +44,25 @@
 #if defined(sens_power_via_mcu)
   // Sensor power GND
   //PB4 D12
-  #define sensor_gnd_PIN   4
-  #define sensor_gnd_DDR   DDRB
-  #define sensor_gnd_PORT  PORTB
+  #define SENS_GND_PIN   4
+  #define SENS_GND_DDR   DDRB
+  #define SENS_GND_PORT  PORTB
   // Sensor power vcc
   //PB3 D11
-  #define sensor_vcc_PIN   3
-  #define sensor_vcc_DDR   DDRB
-  #define sensor_vcc_PORT  PORTB
+  #define SENS_VCC_PIN   3
+  #define SENS_VCC_DDR   DDRB
+  #define SENS_VCC_PORT  PORTB
 #endif //sens_power_via_mcu
 
 #if defined(laser_power_via_mcu)
   // laser power GND
   //PB4 D12
-  //#define laser_gnd_PIN   4
-  //#define laser_gnd_DDR   DDRB
-  //#define laser_gnd_PORT  PORTB
+  //#define LASER_GND_PIN   4
+  //#define LASER_GND_DDR   DDRB
+  //#define LASER_GND_PORT  PORTB
   // laser power vcc
   //PD2 D2
-  #define laser_vcc_PIN   2
-  #define laser_vcc_DDR   DDRD
-  #define laser_vcc_PORT  PORTD
+  #define LASER_VCC_PIN   2
+  #define LASER_VCC_DDR   DDRD
+  #define LASER_VCC_PORT  PORTD
 #endif //laser_power_via_mcu
