@@ -82,23 +82,23 @@ debug_type = 5  Данные перемещения мышки.
 //        Подключение библиотек 
 //###########################################################################################
 #if defined(sens_type_ADNS_5020)
-  #include "sensor_ADNS_5020.h"
+  #include "sens/ADNS_5020.h"
 #endif
 #if defined(sens_type_ADNS_2610)
-  #include "sensor_ADNS_2610.h"
+  #include "sens/ADNS_2610.h"
 #endif
 #if defined(sens_type_ADNS_2620)
-  #include "sensor_ADNS_2620.h"
+  #include "sens/ADNS_2620.h"
 #endif
 
 #if defined(DIGI_SPARK)
-#include "board_Digispark.h"
+#include "boards/Digispark.h"
 #endif
 #if defined(ARDUINO_NANO)
-#include "board_ArduinoNano.h"
+#include "boards/ArduinoNano.h"
 #endif
 #if defined(ARDUINON_NANO_wPOWER)
-#include "board_ArduinoNano.h"
+#include "boards/ArduinoNano.h"
 #endif
 
 #if defined(debug_type) && defined(software_serial)
