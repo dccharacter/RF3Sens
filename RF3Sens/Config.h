@@ -57,10 +57,16 @@ debug_type = 5  Данные перемещения мышки.
 //###########################################################################################
 //        Конец ручных настроек
 //###########################################################################################
-#if debug_type == 5
-#if defined(sens_type_ADNS_2610) || defined(sens_type_ADNS_2620)
-#error "This sensor doesn't have a motion register; debug_type 5 is unavailable"
+
+
+#if (defined(DIGI_SPARK) && !defined(software_serial)) 
+  #error "This board can be used only with software_serial"
 #endif
+
+#if debug_type == 5
+  #if defined(sens_type_ADNS_2610) || defined(sens_type_ADNS_2620)
+    #error "This sensor doesn't have a motion register; debug_type 5 is unavailable"
+  #endif
 #endif
 
 
