@@ -8,7 +8,7 @@
 // Сергей Тараненко (aka setar @ RoboForum.ru)
 //###########################################################################################
 
-/* board_ArduinoNano.h */
+/* boards/ArduinoNano.h */
 
 #if defined(use_NCS)
   //pin_NCS  PB2 SS D10

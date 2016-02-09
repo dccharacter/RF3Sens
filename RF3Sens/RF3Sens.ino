@@ -77,14 +77,14 @@ void loop(){
 //###########################################################################################
 // штатный режим датчика для 3D принтера
 #ifndef debug_type
-#define MA_LONG 20 // глубина длинной среднескользящей
-#define MA_SHORT 5 // глубина короткой среднескользящей
 
 #if defined(Algo_MaxPix)
   byte dataMax;
 #endif
 
 #if defined(Algo_MaxSqualMA)
+  #define MA_LONG 20 // глубина длинной среднескользящей
+  #define MA_SHORT 5 // глубина короткой среднескользящей
   byte dataSqual[MA_LONG];
   float MALongSqual,MAShortSqual;
   boolean laser_in_sight=false, sensed = false, SqualGrow = false;
