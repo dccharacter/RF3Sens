@@ -95,11 +95,38 @@ void loop(){
   MALongSqual=0; MAShortSqual=0;
 #endif
   
+#if defined( ARDUINO_NANO_DOUBLE_LASER)
+    uint8_t dataMax, dataMax_prev;
+    uint8_t dataSL, dataSU;
+    uint16_t dataS, dataS_prev;
+    uint8_t laserId=1;
+#endif
+
   while(1){
-    //dataMax = ADNS_read(ADNS_MAX_PIX);
-    //dataAVG = ADNS_read(ADNS_PIX_SUM);
-    //dataSqual = ADNS_read(ADNS_SQUAL);
-    //dataSU = ADNS_read(ADNS_SHUTTER_UPPER);
+#if defined( ARDUINO_NANO_DOUBLE_LASER)
+    dataMax = ADNS_read(ADNS_MAX_PIX);
+    dataSU = ADNS_read(ADNS_SHUTTER_UPPER);
+    dataSL = ADNS_read(ADNS_SHUTTER_LOWER);
+  if (laserId == 2) {
+	  PIN_HIGH(laser1_vcc);
+	  PIN_LOW(laser2_vcc);
+	  laserId = 1;
+  } else {
+	  PIN_HIGH(laser2_vcc);
+	  PIN_LOW(laser1_vcc);
+	  laserId = 2;
+  }
+  PIN_LOW(LED);
+  if (dataMax > 60 && dataMax_prev > 60) {
+	  dataS = dataSL + 256 * dataSU;
+	  if(abs(dataS - dataS_prev) < 1000) {
+		  PIN_HIGH(LED);
+	  }
+  }
+  dataS_prev = dataS;
+  dataMax_prev = dataMax;
+  delay(10);
+#endif
 
 //-------------------------------------------------------------------------------------------
 #if defined(Algo_MaxPix)
@@ -144,9 +171,20 @@ void loop(){
 #if debug_type ==1
 //-------------------------------------------------------------------------------------------
   byte Frame[NUM_PIXS + 7],dataMax, dataSU;
+  uint8_t laserId = 2; // 0 = off; 1 = laser 1; 2 = laser 2; 
+  PIN_LOW(LED);
 
   while(1){
     pixel_and_params_grab(Frame);
+  if (laserId == 2) {
+	  PIN_HIGH(laser1_vcc);
+	  PIN_LOW(laser2_vcc);
+	  laserId = 1;
+  } else {
+	  PIN_HIGH(laser2_vcc);
+	  PIN_LOW(laser1_vcc);
+	  laserId = 2;
+  }
     SERIAL_OUT.write(Frame, NUM_PIXS + 7); // send frame in raw format
     dataSU = Frame[4+NUM_PIXS];
     dataMax = Frame[1+NUM_PIXS];
@@ -254,21 +292,21 @@ void loop(){
 #elif debug_type ==6
 //-------------------------------------------------------------------------------------------
   uint8_t Frame[7];
-  uint8_t laserId = 0; // 0 = off; 1 = laser 1; 2 = laser 2; 
+  uint8_t laserId = 2; // 0 = off; 1 = laser 1; 2 = laser 2; 
   //заголовок
 
   SERIAL_OUT.println  (F  ("Squal:\tMax:\tMin:\tSum:\tShutter:\tLaserId:"));
   while(1){
-  if (laserId == 1) {
-	  PIN_HIGH(laser1_vcc);
-  }
     params_grab(Frame);
 
-  if (laserId == 1) {
-	  PIN_LOW(laser1_vcc);
-	  laserId = 0;
-  } else {
+  if (laserId == 2) {
+	  PIN_HIGH(laser1_vcc);
+	  PIN_LOW(laser2_vcc);
 	  laserId = 1;
+  } else {
+	  PIN_HIGH(laser2_vcc);
+	  PIN_LOW(laser1_vcc);
+	  laserId = 2;
   }
     ByteToString(Frame[0]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
     ByteToString(Frame[1]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
