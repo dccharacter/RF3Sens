@@ -97,6 +97,7 @@ void loop(){
   
 #if defined( ARDUINO_NANO_DOUBLE_LASER)
     uint8_t dataMax, dataMax_prev;
+    uint8_t dataSqual, dataSqual_prev;
     uint8_t dataSL, dataSU;
     uint16_t dataS, dataS_prev;
     uint8_t laserId=1;
@@ -105,8 +106,9 @@ void loop(){
   while(1){
 #if defined( ARDUINO_NANO_DOUBLE_LASER)
     dataMax = ADNS_read(ADNS_MAX_PIX);
-    dataSU = ADNS_read(ADNS_SHUTTER_UPPER);
-    dataSL = ADNS_read(ADNS_SHUTTER_LOWER);
+    dataSqual = ADNS_read(ADNS_PIX_SUM);
+    //dataSU = ADNS_read(ADNS_SHUTTER_UPPER);
+    //dataSL = ADNS_read(ADNS_SHUTTER_LOWER);
   if (laserId == 2) {
 	  PIN_HIGH(laser1_vcc);
 	  PIN_LOW(laser2_vcc);
@@ -118,14 +120,15 @@ void loop(){
   }
   PIN_LOW(LED);
   if (dataMax > 60 && dataMax_prev > 60) {
-	  dataS = dataSL + 256 * dataSU;
-	  if(abs(dataS - dataS_prev) < 1000) {
+	  //dataS = dataSL + 256 * dataSU;
+	  if(abs(dataSqual - dataSqual_prev) < 1) {
 		  PIN_HIGH(LED);
 	  }
   }
-  dataS_prev = dataS;
+  //dataS_prev = dataS;
   dataMax_prev = dataMax;
-  delay(10);
+  dataSqual_prev = dataSqual;
+  delay(1);
 #endif
 
 //-------------------------------------------------------------------------------------------
