@@ -53,3 +53,9 @@
 #define laser2_vcc_PIN   6
 #define laser2_vcc_DDR   DDRD
 #define laser2_vcc_PORT  PORTD
+
+//Laser PWM control
+//PB1 D9
+#define laser_pwm_PIN	1
+#define laser_pwm_DDR	DDRB
+#define laser_pwm_PORT	PORTB

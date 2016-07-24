@@ -129,5 +129,4 @@ debug_type = 6 Тестирование режима двойного лазер
 #define PIN_HIGH(PIN)   GET_PORT(PIN) |= (1<<GET_PIN(PIN))
 #define PIN_TOGGLE(PIN)   GET_PORT(PIN) ^= (1<<GET_PIN(PIN))
 #define PIN_READ(PIN)   GET_IN(PIN) & (1<<GET_PIN(PIN))
-
 #define NUM_PIXS (ARRAY_WIDTH * ARRAY_HEIGHT)

@@ -33,12 +33,14 @@
 #define ADNS_SQUAL             0x44
 #define ADNS_SHUTTER_UPPER     0x49
 #define ADNS_SHUTTER_LOWER     0x4a
+#define ADNS_FRAME_PERIOD      0x4b
 #define ADNS_MAX_PIX     0x45
 #define ADNS_PIX_SUM         0x47
 #define ADNS_MIN_PIX     0x46
 #define ADNS_PIX_GRAB        0x48
 #define ADNS_MASK_PIX  0x3f
 #define ADNS_PIX_DATA_VALID  0x40
+#define ADNS_DATA_SOF        0x80
 #define ADNS_DELAY_TSWW        100
 #define ADNS_DELAY_TSRAD       100
 
