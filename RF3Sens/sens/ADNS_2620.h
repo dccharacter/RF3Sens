@@ -23,30 +23,30 @@
 
 #undef use_NCS            // имеется ли у сенсора нога NCS
 
-#define ARRAY_WIDTH       18
-#define ARRAY_HEIGHT      18
+#define ARRAY_WIDTH            18
+#define ARRAY_HEIGHT           18
 
-#define ADNS_CONF     0x40
-//#define ADNS_MOTION            0x42
+#define ADNS_CONF              0x40
+//#define ADNS_MOTION          0x42
 #define ADNS_DELTA_X           0x43
 #define ADNS_DELTA_Y           0x42
 #define ADNS_SQUAL             0x44
 #define ADNS_SHUTTER_UPPER     0x49
 #define ADNS_SHUTTER_LOWER     0x4a
 #define ADNS_FRAME_PERIOD      0x4b
-#define ADNS_MAX_PIX     0x45
-#define ADNS_PIX_SUM         0x47
-#define ADNS_MIN_PIX     0x46
-#define ADNS_PIX_GRAB        0x48
-#define ADNS_MASK_PIX  0x3f
-#define ADNS_PIX_DATA_VALID  0x40
-#define ADNS_DATA_SOF        0x80
+#define ADNS_MAX_PIX           0x45
+#define ADNS_PIX_SUM           0x47
+#define ADNS_MIN_PIX           0x46
+#define ADNS_PIX_GRAB          0x48
+#define ADNS_MASK_PIX          0x3f
+#define ADNS_PIX_DATA_VALID    0x40
+#define ADNS_DATA_SOF          0x80
 #define ADNS_DELAY_TSWW        100
 #define ADNS_DELAY_TSRAD       100
 
-#define ADNS_CONST_MAX          59
-#define ADNS_CONST_MIN          3
-#define ADNS_CONST_PIX_MIN       50
-#define ADNS_CONST_PIX_MAX       70
+#define ADNS_CONST_MAX         59
+#define ADNS_CONST_MIN         3
+#define ADNS_CONST_PIX_MIN     50
+#define ADNS_CONST_PIX_MAX     70
 
 #endif //#ifndef SENSOR_ADNS_2620_H

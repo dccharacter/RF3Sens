@@ -84,9 +84,10 @@ void loop(){
 //-------------------------------------------------------------------------------------------
 #if debug_type ==1
 //-------------------------------------------------------------------------------------------
-  byte Frame[NUM_PIXS + 7] = {0}, dataMax, dataMin, lineMax, lineMin;
-  uint8_t laserId = 2; // 0 = off; 1 = laser 1; 2 = laser 2; 
-  uint16_t dataShutt;
+  byte Frame[NUM_PIXS + 7] = {0}, dataMax, lineMax;
+  //byte dataMin, lineMin;
+  //uint8_t laserId = 2; // 0 = off; 1 = laser 1; 2 = laser 2; 
+  //uint16_t dataShutt;
   
   PIN_LOW(LED);
 
@@ -98,15 +99,15 @@ void loop(){
     //pixel_and_params_grab(Frame);
     single_line_grab(Frame);
     dataMax = Frame[NUM_PIXS + 1];
-    dataMin = Frame[NUM_PIXS + 2];
+    //dataMin = Frame[NUM_PIXS + 2];
     lineMax = Frame[NUM_PIXS + 0];
-    lineMin = Frame[NUM_PIXS + 3];
+    //lineMin = Frame[NUM_PIXS + 3];
     //if (dataMax - dataMin > 30) { //laser spot is visible, arm the sensor
       //if (lineMax < 40) { //spot has not reached the last line
         //dataShutt = ((*(Frame + NUM_PIXS + 4)) << 8) + *(Frame + NUM_PIXS + 5);
         RefrPowerLaser(dataMax, 50, 0);
       //}
-      if (lineMax > 48) { //bingo!
+      if (lineMax > 42) { //bingo!
         PIN_HIGH(LED);
         delay(500);
       } else {
@@ -294,6 +295,7 @@ void ADNS_reset(void){
   ADNS_write(ADNS_CONF,0x80);
   delay(1000);
   ADNS_write(ADNS_CONF,0x01); //Always awake
+  ADNS_write(ADNS_FRAME_PERIOD, 0xE0); //set framerate to 3000fps
 #endif
 }
 
@@ -370,24 +372,25 @@ byte ADNS_read(byte address){
 //-------------------------------------------------------------------------------------------
 inline void single_line_grab(uint8_t *buffer) {
   uint8_t temp_byte;
-  uint8_t nBytes = 18;
+  //uint16_t nBytes = NUM_PIXS; //18;
+  uint16_t nBytes = 18;
   uint8_t lineMax, lineMin; //determine max and min pix in data read
 
-  //reset the pixel grab counter
-  ADNS_write(ADNS_PIX_GRAB, 0x00);
-  
-  /*while (1) {
-      temp_byte = ADNS_read(ADNS_PIX_GRAB);
-      if (temp_byte & (ADNS_PIX_DATA_VALID | ADNS_DATA_SOF)) {
-        break;
-      }
-  }
-  temp_byte &= ADNS_MASK_PIX;
-  *buffer = temp_byte;*/
   lineMax = 0;
   lineMin = 255;
 
-  for (uint16_t count = 0; count < nBytes; count++) {
+  //reset the pixel grab counter
+  ADNS_write(ADNS_PIX_GRAB, 0x00);
+
+  while (1) {
+    temp_byte = ADNS_read(ADNS_PIX_GRAB);
+    if (temp_byte & (ADNS_PIX_DATA_VALID | ADNS_DATA_SOF)) {
+      break;
+    }
+  }
+  *buffer = temp_byte & ADNS_MASK_PIX;  // only n bits are used for data
+
+  for (uint16_t count = 1; count < nBytes; count++) {
     while (1) {
       temp_byte = ADNS_read(ADNS_PIX_GRAB);
       if (temp_byte & ADNS_PIX_DATA_VALID) {
@@ -411,7 +414,6 @@ inline void single_line_grab(uint8_t *buffer) {
   *(buffer + NUM_PIXS + 6) = RegPowLaser;
   *(buffer + NUM_PIXS + 0) = lineMax;
   *(buffer + NUM_PIXS + 3) = lineMin;
-
 }
 //-------------------------------------------------------------------------------------------
 inline void pixel_grab(uint8_t *buffer, uint16_t nBytes) {
