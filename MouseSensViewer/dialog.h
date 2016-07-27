@@ -3,6 +3,7 @@
 
 #include <QDialog>
 #include <QTimer>
+#include <QCheckBox>
 
 #include <QtSerialPort/QSerialPort>
 
@@ -31,6 +32,7 @@ private slots:
 	void processTimeout();
     void loadSettings();
     void saveSettings();
+    void pauseOutput();
 
 private:
 	void setControlsEnabled(bool enable);
@@ -48,7 +50,11 @@ private:
 	QLabel *trafficLabel;
 	QLabel *statusLabel;
 	QPushButton *runButton;
+    QPushButton *pauseButton;
+    QCheckBox *startOnRun;
     QString m_sSettingsFile;
+    QLabel *pixelBrightness;
+    QPoint mousePosition;
 
 	QSerialPort serial;
 	QByteArray response;

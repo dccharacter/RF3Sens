@@ -85,7 +85,7 @@ void loop(){
 #if debug_type ==1
 //-------------------------------------------------------------------------------------------
   byte Frame[NUM_PIXS + 7] = {0}, dataMax, lineMax;
-  //byte dataMin, lineMin;
+  byte dataMin, lineMin;
   //uint8_t laserId = 2; // 0 = off; 1 = laser 1; 2 = laser 2; 
   //uint16_t dataShutt;
   
@@ -101,13 +101,13 @@ void loop(){
     dataMax = Frame[NUM_PIXS + 1];
     //dataMin = Frame[NUM_PIXS + 2];
     lineMax = Frame[NUM_PIXS + 0];
-    //lineMin = Frame[NUM_PIXS + 3];
+    lineMin = Frame[NUM_PIXS + 3];
     //if (dataMax - dataMin > 30) { //laser spot is visible, arm the sensor
-      //if (lineMax < 40) { //spot has not reached the last line
+      if (!(dataMax - dataMin > 40 && lineMax - lineMin > 7)) { //spot has not reached the last line
         //dataShutt = ((*(Frame + NUM_PIXS + 4)) << 8) + *(Frame + NUM_PIXS + 5);
         RefrPowerLaser(dataMax, 50, 0);
-      //}
-      if (lineMax > 42) { //bingo!
+      }
+      if (lineMax > 20) { //bingo!
         PIN_HIGH(LED);
         delay(500);
       } else {
@@ -117,13 +117,12 @@ void loop(){
     //  PIN_LOW(LED);
     //}
     
-    //SERIAL_OUT.write(Frame, NUM_PIXS + 7); // send frame in raw format
+    //SERIAL_OUT.write(Frame, NUM_PIXS + 7); delay(2);// send frame in raw format
     //SERIAL_OUT.write(Frame, 144); // send frame in raw format
     //SERIAL_OUT.write(Frame, NUM_PIXS + 7 - 144); // send frame in raw format
     //dataSU = Frame[4+NUM_PIXS];
     //dataMax = Frame[1+NUM_PIXS];
     //RefrPowerLaser(dataSU);
-    //delay(2);
   }
 //-------------------------------------------------------------------------------------------
 #elif debug_type ==2
@@ -374,23 +373,20 @@ inline void single_line_grab(uint8_t *buffer) {
   uint8_t temp_byte;
   //uint16_t nBytes = NUM_PIXS; //18;
   uint16_t nBytes = 18;
-  uint8_t lineMax, lineMin; //determine max and min pix in data read
-
-  lineMax = 0;
-  lineMin = 255;
+  uint8_t linePix = 18;
+  uint8_t lineMax = 0, lineMin = 255; //determine max and min pix in data read
 
   //reset the pixel grab counter
   ADNS_write(ADNS_PIX_GRAB, 0x00);
 
-  while (1) {
+  /*while (1) {
     temp_byte = ADNS_read(ADNS_PIX_GRAB);
     if (temp_byte & (ADNS_PIX_DATA_VALID | ADNS_DATA_SOF)) {
       break;
     }
   }
-  *buffer = temp_byte & ADNS_MASK_PIX;  // only n bits are used for data
-
-  for (uint16_t count = 1; count < nBytes; count++) {
+  *buffer = temp_byte & ADNS_MASK_PIX;  // only n bits are used for data*/
+  for (uint16_t count = 0; count < nBytes; count++) {
     while (1) {
       temp_byte = ADNS_read(ADNS_PIX_GRAB);
       if (temp_byte & ADNS_PIX_DATA_VALID) {
@@ -399,11 +395,13 @@ inline void single_line_grab(uint8_t *buffer) {
     }
     temp_byte &= ADNS_MASK_PIX;
     *(buffer + count) = temp_byte;  // only n bits are used for data
-    if (temp_byte > lineMax) {
-      lineMax = temp_byte;
-    }
-    if (temp_byte < lineMin) {
-      lineMin = temp_byte;
+    if (count < linePix) {
+      if (temp_byte > lineMax) {
+        lineMax = temp_byte;
+      }
+      if (temp_byte < lineMin) {
+        lineMin = temp_byte;
+      }
     }
   }
 
@@ -414,6 +412,7 @@ inline void single_line_grab(uint8_t *buffer) {
   *(buffer + NUM_PIXS + 6) = RegPowLaser;
   *(buffer + NUM_PIXS + 0) = lineMax;
   *(buffer + NUM_PIXS + 3) = lineMin;
+
 }
 //-------------------------------------------------------------------------------------------
 inline void pixel_grab(uint8_t *buffer, uint16_t nBytes) {

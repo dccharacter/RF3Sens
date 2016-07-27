@@ -8,6 +8,7 @@
 #include <QGridLayout>
 #include <QSettings>
 #include <QApplication>
+#include <QByteArray>
 
 #include <QtSerialPort/QSerialPortInfo>
 
@@ -45,7 +46,7 @@ QImage image(5, 5, QImage::Format_Indexed8);
 
 Dialog::Dialog(QWidget *parent)
 	: QDialog(parent)
-	, responseSize(0)
+    , responseSize(0)
 	, serialPortLabel(new QLabel(tr("Serial port:")))
 	, serialPortComboBox(new QComboBox())
 	, BaudRateComboBox(new QComboBox())
@@ -53,8 +54,12 @@ Dialog::Dialog(QWidget *parent)
 	, waitResponseSpinBox(new QSpinBox())
 	, trafficLabel(new QLabel(tr("No traffic.")))
 	, statusLabel(new QLabel(tr("Status: Not running.")))
-	, runButton(new QPushButton(tr("Start")))
+    , runButton(new QPushButton(tr("Start")))
+    , pauseButton(new QPushButton(tr("Pause")))
+    , startOnRun(new QCheckBox(tr("Start On Run")))
+    , pixelBrightness(new QLabel(tr("No traffic.")))
 {
+
 	foreach (const QSerialPortInfo &info, QSerialPortInfo::availablePorts())
         serialPortComboBox->addItem(info.portName());
 
@@ -74,7 +79,9 @@ Dialog::Dialog(QWidget *parent)
 	mainLayout->addWidget(waitResponseLabel, 1, 0);
 	mainLayout->addWidget(waitResponseSpinBox, 1, 1);
 	mainLayout->addWidget(trafficLabel, 2, 0, 1, 4);
-	mainLayout->addWidget(statusLabel, 3, 0, 1, 5);
+    mainLayout->addWidget(statusLabel, 4, 0, 1, 5);
+    mainLayout->addWidget(pauseButton, 1, 3);
+    mainLayout->addWidget(pixelBrightness, 3, 0);
 	setLayout(mainLayout);
 
 	setWindowTitle(tr("Mouse Sensor"));
@@ -95,7 +102,8 @@ Dialog::Dialog(QWidget *parent)
             this, SLOT(saveSettings()));
     connect(BaudRateComboBox, SIGNAL(currentTextChanged(QString)),
             this, SLOT(saveSettings()));
-
+    connect(pauseButton, SIGNAL(clicked()),
+            this, SLOT(pauseOutput()));
 }
 
 void Dialog::sendRequest()
@@ -129,24 +137,37 @@ void Dialog::readResponse()
 
 	if (!timer.isActive())
 		timer.start(waitResponseSpinBox->value());
-	response.append(serial.readAll());
+        response.append(serial.readAll());
+}
 
+void Dialog::pauseOutput()
+{
+    if (pauseButton->text() == "Pause")
+    {
+        pauseButton->setText("Run");
+    } else
+    {
+        pauseButton->setText("Pause");
+    }
 }
 
 void Dialog::processTimeout()
 {
+    int matrixSize = 18;
 	int IndexData;
 	setControlsEnabled(true);
 
-	if(response.size() != responseSize || responseSize ==0)
+    if(response.size() != responseSize || responseSize ==0)
 	{
 		if(response.size() ==(15*15 +7))
 		{
 			resizeImage(&image,15,15,128);
+            matrixSize = 15;
 		}
 		else if(response.size() ==(18*18 +7))
 		{
 			resizeImage(&image,18,18,64);
+            matrixSize = 18;
 		}
 		else
 		{
@@ -157,24 +178,28 @@ void Dialog::processTimeout()
 	}
 	else
 	{
-		IndexData = RegArrayWidth * RegArrayHeight;
-		trafficLabel->setText(tr("Max: %1, Min: %2, Ave: %3, Shut: %4, Squal: %5, LaserPower: %6")
-							.arg((int)*(response.data()+IndexData+1)) //MAX_PIXEL
-							.arg((unsigned char)*(response.data()+IndexData+2)) //MIN_PIXEL
-							.arg((unsigned char)*(response.data()+IndexData+3)) //AVE
-							.arg((unsigned int)(((unsigned char)*(response.data()+IndexData+4)*256)+((unsigned char)*(response.data()+IndexData+5))))
-							.arg((int)*(response.data()+IndexData)) //SQUAL
-              .arg((unsigned char)*(response.data()+IndexData+6))); //LASER_POWER
+        if(pauseButton->text() == "Pause") {
+            IndexData = RegArrayWidth * RegArrayHeight;
+            trafficLabel->setText(tr("Max: %1, Min: %2, Ave: %3, Shut: %4, Squal: %5, LaserPower: %6")
+                                  .arg((int)*(response.data()+IndexData+1), 2) //MAX_PIXEL
+                                  .arg((unsigned char)*(response.data()+IndexData+2), 2) //MIN_PIXEL
+                                  .arg((unsigned char)*(response.data()+IndexData+3), 3) //AVE
+                                  .arg((unsigned int)(((unsigned char)*(response.data()+IndexData+4)*256)+((unsigned char)*(response.data()+IndexData+5))), 5)
+                                  .arg((int)*(response.data()+IndexData), 2) //SQUAL
+                                  .arg((unsigned char)*(response.data()+IndexData+6), 3)); //LASER_POWER
 
 
-		for (int y = 0; y < image.height(); y++)
-		{
-			//memcpy(rawData + y*RegArrayWidth, response.data() + y*RegArrayWidth, image.bytesPerLine());
-			memcpy(image.scanLine(y), response.data() + y*RegArrayWidth, image.bytesPerLine());
-		}
-		statusLabel->setPixmap(QPixmap::fromImage(image.scaled(180*2, 180*2))); // Show result on a form
 
-/*
+
+            for (int y = 0; y < image.height(); y++)
+            {
+                //memcpy(rawData + y*RegArrayWidth, response.data() + y*RegArrayWidth, image.bytesPerLine());
+                memcpy(image.scanLine(y), response.data() + y*RegArrayWidth, image.bytesPerLine());
+            }
+            statusLabel->setPixmap(QPixmap::fromImage(image.scaled(180*2, 180*2))); // Show result on a form
+        }
+
+        /*
 		unsigned char rawData[ARRAY_WIDTH*ARRAY_HEIGHT];
 		trafficLabel->setText("\n\r");
 		int nIndex = 0;
@@ -198,7 +223,48 @@ void Dialog::processTimeout()
 		}
 */
 	}
-	response.clear();
+
+    int labelBegX = statusLabel->x();
+    int labelBegY = statusLabel->y();
+    int labelWidth = statusLabel->width();
+    int labelHeight = statusLabel->height();
+    mousePosition = this->mapFromGlobal(QCursor::pos());
+
+    int lineN = -1;
+    int pixelN = -1;
+
+    if (mousePosition.x() > labelBegX && mousePosition.x() < labelBegX + labelHeight)
+    {
+        int relativePosX = mousePosition.x() - labelBegX;
+        pixelN = (relativePosX / (labelHeight/matrixSize)) + 1;
+    } else
+    {
+        pixelN = -1;
+    }
+
+    if (mousePosition.y() > labelBegY && mousePosition.y() < labelBegY + labelHeight)
+    {
+        int relativePosY = mousePosition.y() - labelBegY;
+        lineN = relativePosY / (labelHeight/matrixSize) + 1;
+    } else
+    {
+        lineN = -1;
+    }
+
+    int pixelValue = -1;
+    if (lineN && pixelN) {
+        pixelValue = (QRgb)*(image.scanLine((lineN - 1)) + (pixelN - 1));
+    }
+
+
+
+
+    pixelBrightness->setText(tr("Line#: %1, Pix#: %2, Brightness: %3")
+                          .arg(lineN, 2) //Line#
+                          .arg(pixelN, 2) //Pix#
+                          .arg(pixelValue, 3)); //Brightness
+
+    response.clear();
 }
 
 void Dialog::processError(const QString &error)
