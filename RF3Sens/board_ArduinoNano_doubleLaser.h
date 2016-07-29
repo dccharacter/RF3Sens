@@ -59,3 +59,9 @@
 #define laser_pwm_PIN	1
 #define laser_pwm_DDR	DDRB
 #define laser_pwm_PORT	PORTB
+
+// GPIO for signalling to external board
+// PRD7 D7
+#define gpio1_PIN	7
+#define gpio1_DDR	DDRD
+#define gpio1_PORT	PORTD

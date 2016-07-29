@@ -103,11 +103,11 @@ void loop(){
     lineMax = Frame[NUM_PIXS + 0];
     lineMin = Frame[NUM_PIXS + 3];
     //if (dataMax - dataMin > 30) { //laser spot is visible, arm the sensor
-      if (!(dataMax - dataMin > 40 && lineMax - lineMin > 7)) { //spot has not reached the last line
+    //  if (!(dataMax - dataMin > 40 && lineMax - lineMin > 7)) { //spot has not reached the last line
         //dataShutt = ((*(Frame + NUM_PIXS + 4)) << 8) + *(Frame + NUM_PIXS + 5);
         RefrPowerLaser(dataMax, 50, 0);
-      }
-      if (lineMax > 20) { //bingo!
+   //   }
+      if (lineMax > 18) { //bingo!
         PIN_HIGH(LED);
         delay(500);
       } else {
@@ -117,7 +117,7 @@ void loop(){
     //  PIN_LOW(LED);
     //}
     
-    //SERIAL_OUT.write(Frame, NUM_PIXS + 7); delay(2);// send frame in raw format
+    SERIAL_OUT.write(Frame, NUM_PIXS + 7); delay(2);// send frame in raw format
     //SERIAL_OUT.write(Frame, 144); // send frame in raw format
     //SERIAL_OUT.write(Frame, NUM_PIXS + 7 - 144); // send frame in raw format
     //dataSU = Frame[4+NUM_PIXS];
@@ -173,17 +173,29 @@ void loop(){
       delay(20);
 #else
       delay(60);  //задержка больше из-за низкой скорости Serial
-    #endif
+#endif
   }
 //-------------------------------------------------------------------------------------------
 #elif debug_type ==4
 //-------------------------------------------------------------------------------------------
-  //Как 3-й режим, но по разрешению сигнала pin_TRIG (лог точно ограничен сигналом z_probe)
+  //Как 3-й режим, но по разрешению сигнала pin_TRIG
   byte Frame[7];
+  PIN_OUTPUT(gpio1);
+  PIN_LOW(gpio1);
+
+  PIN_LOW(laser1_vcc); //enable base laser
+  PIN_HIGH(laser2_vcc); //disable matrix laser
+  RegPowLaser = 143;
+  analogWrite(9, RegPowLaser);
+
+  // начинаем с печати шапки
+  SERIAL_OUT.println (F  ("Squal:\tMax:\tMin:\tSum:\tShutter:\tLaserPower:"));
+
   while(1){
-    if(PIN_READ(TRIG)){
-      //заголовок
-      SERIAL_OUT.println (F  ("Squal:\tMax:\tMin:\tSum:\tShutter:\tLaserPower:"));
+
+    if(PIN_READ(TRIG)){ // каждое измерение начинается с сигнала триггера (взводится в g-коде)
+      
+      while(PIN_READ(TRIG));
 
       params_grab(Frame);
 
@@ -200,13 +212,19 @@ void loop(){
       SERIAL_OUT.write(0x09);
       ByteToString(Frame[6]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
       SERIAL_OUT.write(0x0a);
-      //SERIAL_OUT.write(0x0d);
+      SERIAL_OUT.write(0x0d);
 
 #if SERIAL_SPEED > 115200
       delay(20);
 #else
       delay(60);  //задержка больше из-за низкой скорости Serial
 #endif
+
+    // после того, как считали значения и отправили их в сериал, даем марлину
+    // сигнал о готовности к следующему шагу
+    PIN_HIGH(gpio1);
+    delay(40);
+    PIN_LOW(gpio1);
     }
   }
 //-------------------------------------------------------------------------------------------
@@ -371,8 +389,8 @@ byte ADNS_read(byte address){
 //-------------------------------------------------------------------------------------------
 inline void single_line_grab(uint8_t *buffer) {
   uint8_t temp_byte;
-  //uint16_t nBytes = NUM_PIXS; //18;
-  uint16_t nBytes = 18;
+  uint16_t nBytes = NUM_PIXS; //18;
+  //uint16_t nBytes = 18;
   uint8_t linePix = 18;
   uint8_t lineMax = 0, lineMin = 255; //determine max and min pix in data read
 
