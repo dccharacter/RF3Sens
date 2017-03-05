@@ -107,9 +107,9 @@ void loop(){
         //dataShutt = ((*(Frame + NUM_PIXS + 4)) << 8) + *(Frame + NUM_PIXS + 5);
         RefrPowerLaser(dataMax, 50, 0);
    //   }
-      if (lineMax > 18) { //bingo!
+      if (lineMax > 22) { //bingo!
         PIN_HIGH(LED);
-        delay(500);
+        delay(200);
       } else {
         PIN_LOW(LED);
       }
@@ -185,7 +185,7 @@ void loop(){
 
   PIN_LOW(laser1_vcc); //enable base laser
   PIN_HIGH(laser2_vcc); //disable matrix laser
-  RegPowLaser = 143;
+  RegPowLaser = 140;
   analogWrite(9, RegPowLaser);
 
   // начинаем с печати шапки
@@ -389,8 +389,8 @@ byte ADNS_read(byte address){
 //-------------------------------------------------------------------------------------------
 inline void single_line_grab(uint8_t *buffer) {
   uint8_t temp_byte;
-  uint16_t nBytes = NUM_PIXS; //18;
-  //uint16_t nBytes = 18;
+  //uint16_t nBytes = NUM_PIXS; //18;
+  uint16_t nBytes = 18;
   uint8_t linePix = 18;
   uint8_t lineMax = 0, lineMin = 255; //determine max and min pix in data read
 

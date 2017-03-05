@@ -8,3 +8,6 @@ applet/
 *.DS_Store
 *.idea
 ~*
+
+# eagle lock file
+*.lck
