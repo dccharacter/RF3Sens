@@ -8,3 +8,4 @@ applet/
 *.DS_Store
 *.idea
 ~*
+*.lck
