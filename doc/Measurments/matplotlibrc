@@ -1,0 +1,4 @@
+backend	: TkAgg
+lines.color       : red   # has no affect on plot(); see axes.prop_cycle
+#axes.prop_cycle    : cycler('color', 'grcmyk')
+
