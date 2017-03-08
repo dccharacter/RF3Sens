@@ -10,7 +10,7 @@
 
 /* boards/ArduinoNano_wPower.h */
 
-#if defined(use_NCS)
+#if defined(USE_NCS)
   //pin_NCS  PB2 SS D10
   #define NCS_PIN        2
   #define NCS_DDR        DDRB

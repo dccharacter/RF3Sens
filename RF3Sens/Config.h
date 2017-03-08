@@ -13,34 +13,34 @@
 //        Ручные настройки
 //###########################################################################################
 /*
-При отсутствии флага debug_type, программа быстро обрабатывает соотв. регистр и выдает данные на led (штатная работа принтера).
-При установленном флаге debug_type, по serial port передаются данные:
-debug_type = 1  Передача картинки для фокусировки обьектива, колич. байт = ARRAY_WIDTH * ARRAY_HEIGHT
-debug_type = 2  Для теста точности позиционирования (идея dccharacter-а). 
+При отсутствии флага DEBUG_TYPE, программа быстро обрабатывает соотв. регистр и выдает данные на led (штатная работа принтера).
+При установленном флаге DEBUG_TYPE, по serial port передаются данные:
+DEBUG_TYPE = 1  Передача картинки для фокусировки обьектива, колич. байт = ARRAY_WIDTH * ARRAY_HEIGHT
+DEBUG_TYPE = 2  Для теста точности позиционирования (идея dccharacter-а). 
                 Поиск порога как в штатном режиме (важна скорость), как только сработает порог - выдача картинки в serial port
-debug_type = 3  Передача в текстовом виде на терминал данных: Max_Pix, Min_Pix, Pix_Sum, Shutter
-debug_type = 4  Как 3-й режим, но по разрешению сигнала pin_TRIG (лог точно ограничен сигналом z_probe)
-debug_type = 5  Данные перемещения мышки.
-debug_type = 6 Тестирование режима двойного лазера
+DEBUG_TYPE = 3  Передача в текстовом виде на терминал данных: Max_Pix, Min_Pix, Pix_Sum, Shutter
+DEBUG_TYPE = 4  Как 3-й режим, но по разрешению сигнала pin_TRIG (лог точно ограничен сигналом z_probe)
+DEBUG_TYPE = 5  Данные перемещения мышки.
+DEBUG_TYPE = 6 Тестирование режима двойного лазера
 */
-#define debug_type 1 
+//#define DEBUG_TYPE 1 
 #define NUM_SAMPLES_PER_MEASURE 5 //количество данных для 4-го режима
 
 /*
-Актуально только если есть флаг debug_type
+Актуально только если есть флаг DEBUG_TYPE
 Если определено то применяется программный Serial порт (только одна нога для передачи данных)
 Для платы Digispark это единственный вариант и автоматически включается на 1 ногу
 Если не определено, для дебага используется Hardware Serial
 */
-//#define software_serial 1 // одновременно и признак софтового serial и номер ноги для передачи данных (TX PIN)
+//#define SOFTWARE_SERIAL 1 // одновременно и признак софтового serial и номер ноги для передачи данных (TX PIN)
 #define SERIAL_SPEED 230400
 
 /*
 Тип сенсора, выбрать один нужный
 */
-//#define sens_type_ADNS_5020
-//#define sens_type_ADNS_2610
-#define sens_type_ADNS_2620
+//#define SENS_TYPE_ADNS_5020
+//#define SENS_TYPE_ADNS_2610
+#define SENS_TYPE_ADNS_2620
 
 /*
 Используем ли питание с контроллера
@@ -69,13 +69,13 @@ debug_type = 6 Тестирование режима двойного лазер
 //###########################################################################################
 
 
-#if (defined(DIGI_SPARK) && !defined(software_serial)) 
-  #error "This board can be used only with software_serial"
+#if (defined(DIGI_SPARK) && !defined(SOFTWARE_SERIAL)) 
+  #error "This board can be used only with SOFTWARE_SERIAL"
 #endif
 
-#if debug_type == 5
-  #if defined(sens_type_ADNS_2610) || defined(sens_type_ADNS_2620)
-    #error "This sensor doesn't have a motion register; debug_type 5 is unavailable"
+#if DEBUG_TYPE == 5
+  #if defined(SENS_TYPE_ADNS_2610) || defined(SENS_TYPE_ADNS_2620)
+    #error "This sensor doesn't have a motion register; DEBUG_TYPE 5 is unavailable"
   #endif
 #endif
 
@@ -83,13 +83,13 @@ debug_type = 6 Тестирование режима двойного лазер
 //###########################################################################################
 //        Подключение библиотек 
 //###########################################################################################
-#if defined(sens_type_ADNS_5020)
+#if defined(SENS_TYPE_ADNS_5020)
   #include "sens/ADNS_5020.h"
 #endif
-#if defined(sens_type_ADNS_2610)
+#if defined(SENS_TYPE_ADNS_2610)
   #include "sens/ADNS_2610.h"
 #endif
-#if defined(sens_type_ADNS_2620)
+#if defined(SENS_TYPE_ADNS_2620)
   #include "sens/ADNS_2620.h"
 #endif
 
@@ -106,9 +106,9 @@ debug_type = 6 Тестирование режима двойного лазер
 #include "board_ArduinoNano_doubleLaser.h"
 #endif
 
-#if defined(debug_type) && defined(software_serial)
+#if defined(DEBUG_TYPE) && defined(SOFTWARE_SERIAL)
   #include <SendOnlySoftwareSerial.h>
-  SendOnlySoftwareSerial MyDbgSerial(software_serial, false); //true allows to connect to a regular RS232 without RS232 line driver
+  SendOnlySoftwareSerial MyDbgSerial(SOFTWARE_SERIAL, false); //true allows to connect to a regular RS232 without RS232 line driver
   #define SERIAL_OUT MyDbgSerial
 #else
   #define SERIAL_OUT Serial
