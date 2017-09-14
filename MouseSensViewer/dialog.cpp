@@ -197,6 +197,7 @@ void Dialog::processTimeout()
                 memcpy(image.scanLine(y), response.data() + y*RegArrayWidth, image.bytesPerLine());
             }
             statusLabel->setPixmap(QPixmap::fromImage(image.scaled(180*2, 180*2))); // Show result on a form
+
         }
 
         /*

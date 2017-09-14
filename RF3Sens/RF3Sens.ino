@@ -16,18 +16,27 @@
 byte ADNS_read(uint8_t address);
 void ADNS_reset(void);
 void ADNS_write(uint8_t addr, uint8_t data);
-inline void params_grab(uint8_t *buffer);
+inline void params_grab(uint8_t *buffer, uint8_t ifReset);
 inline void pixel_grab(uint8_t *buffer, uint16_t nBytes); 
 inline void pixel_and_params_grab(uint8_t *buffer);
-inline void single_line_grab(uint8_t *buffer);
+inline uint8_t single_line_grab(uint8_t *buffer);
 void RefrPowerLaser(uint16_t power, uint16_t value, uint16_t halfDev);
 void ByteToString(uint8_t a);
 void Uint16ToString(uint16_t a);
 
 unsigned char Str[5];
-uint8_t RegPowLaser = 200;
+int16_t RegPowLaser = 0;
 
 void setup(){
+  pinMode(3, OUTPUT);
+  TCCR2A = 0;
+  TCCR2B = 0;
+  TCCR2A = _BV(COM2B1) | _BV(WGM21) | _BV(WGM20);
+  TCCR2B = _BV(CS20); // no prescaler
+  OCR2B = 50;
+
+  pinMode(A5, INPUT);
+
   //set pin I/O direction
 #if defined(USE_NCS)
   PIN_OUTPUT(NCS);
@@ -51,9 +60,9 @@ void setup(){
   PIN_OUTPUT(SDIO);
   PIN_LOW(SDIO);
 
-#if defined(DEBUG_TYPE)
+//#if defined(DEBUG_TYPE)
   SERIAL_OUT.begin(SERIAL_SPEED);
-#endif // defined(DEBUG_TYPE)
+//#endif // defined(DEBUG_TYPE)
 
   delay(1000);
   ADNS_reset();
@@ -63,37 +72,35 @@ void loop(){
 //###########################################################################################
 // штатный режим датчика для 3D принтера
 #ifndef DEBUG_TYPE
-  byte Frame[NUM_PIXS + 7] = {0}, dataMax, lineMax;
-  byte dataMin, lineMin;
-  //uint8_t laserId = 2; // 0 = off; 1 = laser 1; 2 = laser 2; 
-  //uint16_t dataShutt;
+  uint8_t Frame[NUM_PIXS + 7] = {0};
+  uint8_t dataSum, dataSqual, lineMax;
   
   PIN_LOW(LED);
 
   PIN_LOW(laser1_vcc); //enable base laser
-  //PIN_HIGH(laser2_vcc); //disable matrix laser
   analogWrite(9,130);
 
   while(1){
-    //pixel_and_params_grab(Frame);
-    single_line_grab(Frame);
-    dataMax = Frame[NUM_PIXS + 1];
-    //dataMin = Frame[NUM_PIXS + 2];
-    lineMax = Frame[NUM_PIXS + 0];
-    lineMin = Frame[NUM_PIXS + 3];
-    //if (dataMax - dataMin > 30) { //laser spot is visible, arm the sensor
-    //  if (!(dataMax - dataMin > 40 && lineMax - lineMin > 7)) { //spot has not reached the last line
-        //dataShutt = ((*(Frame + NUM_PIXS + 4)) << 8) + *(Frame + NUM_PIXS + 5);
-    RefrPowerLaser(dataMax, 50, 0);
-    //   }
-    if (lineMax > 22) { //bingo!
-      PIN_HIGH(LED);
-//      delay(200);
-    } else {
-      PIN_LOW(LED);
+    params_grab(Frame, 1);
+    dataSum = Frame[3];
+    dataSqual = Frame[0];
+    ByteToString(RegPowLaser); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]);
+      SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+    ByteToString(dataSum); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]);
+      SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+    if (dataSqual > 30) {
+      lineMax = single_line_grab(Frame);
+      ByteToString(lineMax); SERIAL_OUT.write('.'); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]);
+        SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x0a);
+      if (lineMax > 60) {
+          PIN_HIGH(LED);
+          delay(100);
+      }
     }
- 
-//-------------------------------------------------------------------------------------------
+    RefrPowerLaser(dataSum, 23, 2);
+    SERIAL_OUT.write(0x0a);
+    
+    PIN_LOW(LED);
   }
 //###########################################################################################
 // отладочные режимы
@@ -114,32 +121,26 @@ void loop(){
 
   while(1){
     //pixel_and_params_grab(Frame);
-    pixel_and_params_grab(Frame);
-    dataMax = Frame[NUM_PIXS + 1];
-    //dataMin = Frame[NUM_PIXS + 2];
-    lineMax = Frame[NUM_PIXS + 0];
-    lineMin = Frame[NUM_PIXS + 3];
-    //if (dataMax - dataMin > 30) { //laser spot is visible, arm the sensor
-    //  if (!(dataMax - dataMin > 40 && lineMax - lineMin > 7)) { //spot has not reached the last line
-        //dataShutt = ((*(Frame + NUM_PIXS + 4)) << 8) + *(Frame + NUM_PIXS + 5);
-        RefrPowerLaser(dataMax, 50, 0);
+    //dataMax = Frame[NUM_PIXS + 1];
+    //lineMax = Frame[NUM_PIXS + 0];
+    //lineMin = Frame[NUM_PIXS + 3];
+
+    //RegPowLaser = (uint8_t)(analogRead(A5) >> 2);    
+    //OCR2B = RegPowLaser;
+    OCR2B += 1;
    //   }
-      if (lineMax > 22) { //bingo!
+     /* if (lineMax > 22) { //bingo!
         PIN_HIGH(LED);
         delay(200);
       } else {
         PIN_LOW(LED);
-      }
+      }*/
+    delay(1);
     //} else {
     //  PIN_LOW(LED);
     //}
     
-    SERIAL_OUT.write(Frame, NUM_PIXS + 7); delay(2);// send frame in raw format
-    //SERIAL_OUT.write(Frame, 144); // send frame in raw format
-    //SERIAL_OUT.write(Frame, NUM_PIXS + 7 - 144); // send frame in raw format
-    //dataSU = Frame[4+NUM_PIXS];
-    //dataMax = Frame[1+NUM_PIXS];
-    //RefrPowerLaser(dataSU);
+    //SERIAL_OUT.write(Frame, NUM_PIXS + 7); delay(2);// send frame in raw format
   }
 //-------------------------------------------------------------------------------------------
 #elif DEBUG_TYPE ==2
@@ -166,23 +167,43 @@ void loop(){
 //-------------------------------------------------------------------------------------------
   //листинг для электронных таблиц: В шапке названия, дальше только данные разделенные "tab".
   byte Frame[7];
+  uint8_t dataMax, lineMax, dataSum;
   //заголовок
   SERIAL_OUT.println  (F  ("Squal:\tMax:\tMin:\tSum:\tShutter:\tLaserPower:"));
   while(1){
-    params_grab(Frame);
+//        RegPowLaser = OCR2B;    
+//	OCR2B += 1;
+//    params_grab(Frame);
 
-    ByteToString(Frame[0]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
-    ByteToString(Frame[1]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
-    ByteToString(Frame[2]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
-    ByteToString(Frame[3]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
-    Uint16ToString(Frame[4] *256 + Frame[5]);
+    single_line_grab(Frame);
+    dataMax = Frame[NUM_PIXS + 1];
+    //dataMin = Frame[NUM_PIXS + 2];
+    lineMax = Frame[NUM_PIXS + 0];
+    dataSum = Frame[NUM_PIXS + 3];
+
+    //if (dataMax - dataMin > 30) { //laser spot is visible, arm the sensor
+    //  if (!(dataMax - dataMin > 40 && lineMax - lineMin > 7)) { //spot has not reached the last line
+        //dataShutt = ((*(Frame + NUM_PIXS + 4)) << 8) + *(Frame + NUM_PIXS + 5);
+    RefrPowerLaser(dataSum, 35, 2);
+    //   }
+    if (lineMax > 60) { //22 - bingo!
+      PIN_HIGH(LED);
+      delay(100);
+    } else {
+      PIN_LOW(LED);
+}
+    ByteToString(Frame[NUM_PIXS + 0]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+    ByteToString(Frame[NUM_PIXS + 1]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+    //ByteToString(Frame[2]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+    ByteToString(Frame[NUM_PIXS + 3]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+    Uint16ToString(Frame[NUM_PIXS + 4] *256 + Frame[NUM_PIXS + 5]);
     SERIAL_OUT.write(Str[4]);
     SERIAL_OUT.write(Str[3]);
     SERIAL_OUT.write(Str[2]);
     SERIAL_OUT.write(Str[1]);
     SERIAL_OUT.write(Str[0]);
     SERIAL_OUT.write(0x09);
-    ByteToString(Frame[6]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
+    ByteToString(Frame[NUM_PIXS + 6]); SERIAL_OUT.write(Str[2]); SERIAL_OUT.write(Str[1]); SERIAL_OUT.write(Str[0]); SERIAL_OUT.write(0x09);
     SERIAL_OUT.write(0x0d);
     SERIAL_OUT.write(0x0a);
 
@@ -297,25 +318,28 @@ void loop(){
       delay(60);  //задержка больше из-за низкой скорости Serial
 #endif //SERIAL_SPEED > 115200
   }
-#endif //debug type?
-#endif
+#endif //DEBUG_TYPE
+#endif // #else #ifndef DEBUG_TYPE
 }
 
 //###########################################################################################
 // процедуры
 //-------------------------------------------------------------------------------------------
-void RefrPowerLaser(uint16_t power, uint16_t value, uint16_t halfDev)
+void RefrPowerLaser(uint16_t power, uint16_t target_value, uint16_t halfDeviation)
 {
-  if (power < value - halfDev && RegPowLaser < 255){
-    RegPowLaser++;
-    //analogWrite(9,RegPowLaser);
-    OCR1A = RegPowLaser;
-  }
-  if (power > value + halfDev && RegPowLaser > 1){
-    RegPowLaser--;
-    //analogWrite(9,RegPowLaser);
-    OCR1A = RegPowLaser;
-  }
+  //if (abs((int16_t)target_value - (int16_t)power) > halfDeviation) {
+    if (power < target_value) {
+      RegPowLaser++;
+    } else if (power > target_value) {
+      RegPowLaser--;
+    }
+    if (RegPowLaser > 255) {
+      RegPowLaser = 255;
+    } else if (RegPowLaser < 0) {
+      RegPowLaser = 0;
+    }
+    OCR2B = (uint8_t)RegPowLaser;
+  //}
 }
 //-------------------------------------------------------------------------------------------
 void ADNS_reset(void){
@@ -329,7 +353,9 @@ void ADNS_reset(void){
   ADNS_write(ADNS_CONF,0x80);
   delay(1000);
   ADNS_write(ADNS_CONF,0x01); //Always awake
-  ADNS_write(ADNS_FRAME_PERIOD, 0xE0); //set framerate to 3000fps
+  delay(2);
+  ADNS_write(ADNS_FRAME_PERIOD, 0xC2); //set framerate to 3000fps
+  delay(2);
 #endif
 }
 
@@ -398,18 +424,19 @@ byte ADNS_read(byte address){
     PIN_HIGH(NCS);
   #endif
   PIN_OUTPUT(SDIO);
-
   // t SRW & t SRR = 1μs.
   delayMicroseconds(2);
   return data;
 }
 //-------------------------------------------------------------------------------------------
-inline void single_line_grab(uint8_t *buffer) {
+inline uint8_t single_line_grab(uint8_t *buffer) {
+
   uint8_t temp_byte;
   //uint16_t nBytes = NUM_PIXS; //18;
   uint16_t nBytes = 18;
   uint8_t linePix = 18;
-  uint8_t lineMax = 0, lineMin = 255; //determine max and min pix in data read
+  uint8_t lineMax = 0;
+  //uint8_t lineMin = 255; //determine max and min pix in data read
 
   //reset the pixel grab counter
   ADNS_write(ADNS_PIX_GRAB, 0x00);
@@ -426,19 +453,12 @@ inline void single_line_grab(uint8_t *buffer) {
     if (temp_byte > lineMax) {
       lineMax = temp_byte;
     }
-    if (temp_byte < lineMin) {
-      lineMin = temp_byte;
-    }
+    //if (temp_byte < lineMin) {
+    //  lineMin = temp_byte;
+    //}
   }
 
-  *(buffer + NUM_PIXS + 1) = ADNS_read(ADNS_MAX_PIX);
-  *(buffer + NUM_PIXS + 2) = ADNS_read(ADNS_MIN_PIX);
-  *(buffer + NUM_PIXS + 4) = ADNS_read(ADNS_SHUTTER_UPPER);
-  *(buffer + NUM_PIXS + 5) = ADNS_read(ADNS_SHUTTER_LOWER);
-  *(buffer + NUM_PIXS + 6) = RegPowLaser;
-  *(buffer + NUM_PIXS + 0) = lineMax;
-  *(buffer + NUM_PIXS + 3) = lineMin;
-
+  return lineMax;
 }
 //-------------------------------------------------------------------------------------------
 inline void pixel_grab(uint8_t *buffer, uint16_t nBytes) {
@@ -458,19 +478,29 @@ inline void pixel_grab(uint8_t *buffer, uint16_t nBytes) {
   }
 }
 //-------------------------------------------------------------------------------------------
-inline void params_grab(uint8_t *buffer) {
-	*(buffer + 0) = ADNS_read(ADNS_SQUAL);
-	*(buffer + 1) = ADNS_read(ADNS_MAX_PIX);
-	*(buffer + 2) = ADNS_read(ADNS_MIN_PIX);
-	*(buffer + 3) = ADNS_read(ADNS_PIX_SUM);
-	*(buffer + 4) = ADNS_read(ADNS_SHUTTER_UPPER);
-	*(buffer + 5) = ADNS_read(ADNS_SHUTTER_LOWER);
-  *(buffer + 6) = RegPowLaser;
+inline void params_grab(uint8_t *buffer, uint8_t ifReset) {
+  if (ifReset) {
+    uint8_t temp_byte;
+    ADNS_write(ADNS_PIX_GRAB, 0x00);
+    while (1) {
+      temp_byte = ADNS_read(ADNS_PIX_GRAB);
+      if (temp_byte & ADNS_PIX_DATA_VALID) {
+        break;
+      }
+    }
+  }
+  *(buffer + 0) = ADNS_read(ADNS_SQUAL);
+  *(buffer + 1) = ADNS_read(ADNS_MAX_PIX);
+  *(buffer + 2) = ADNS_read(ADNS_MIN_PIX);
+  *(buffer + 3) = ADNS_read(ADNS_PIX_SUM);
+  *(buffer + 4) = ADNS_read(ADNS_SHUTTER_UPPER);
+  *(buffer + 5) = ADNS_read(ADNS_SHUTTER_LOWER);
+  *(buffer + 6) = (uint8_t)RegPowLaser;
 }
 //-------------------------------------------------------------------------------------------
 inline void pixel_and_params_grab(uint8_t *buffer) {
-	params_grab((buffer + NUM_PIXS));
 	pixel_grab(buffer, NUM_PIXS);
+	params_grab(buffer + NUM_PIXS, 0);
 }
 //-------------------------------------------------------------------------------------------
 void ByteToString(uint8_t a){
